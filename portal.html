@@ -1,0 +1,1958 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransitPay | Portal</title>
+    <meta name="description"
+        content="TransitPay portal - Access your transport business dashboard as a tenant or host administrator.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <!-- Portal Login Styles -->
+    <link rel="stylesheet" href="css/portal.css">
+    <!-- CSS Modules for Main App -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/ui.css">
+    <link rel="stylesheet" href="css/reports.css">
+</head>
+
+<body>
+    <!-- ==================== PORTAL LOGIN ==================== -->
+    <div id="portalLogin" class="page active">
+        <!-- Animated Background -->
+        <div class="portal-bg">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="orb orb-3"></div>
+            <div class="grid-overlay"></div>
+        </div>
+
+        <!-- Main Container -->
+        <div class="portal-container">
+            <div class="login-card" id="loginCard">
+                <!-- Logo -->
+                <div class="login-logo">
+                    <div class="logo-icon">
+                        <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+                            <rect x="4" y="16" width="40" height="20" rx="4" fill="rgba(255,255,255,0.9)" />
+                            <circle cx="14" cy="38" r="4" fill="#fff" stroke="rgba(255,255,255,0.9)" stroke-width="2" />
+                            <circle cx="34" cy="38" r="4" fill="#fff" stroke="rgba(255,255,255,0.9)" stroke-width="2" />
+                            <rect x="8" y="10" width="12" height="8" rx="2" fill="rgba(255,255,255,0.7)" />
+                            <path d="M38 16 L44 16 L44 28 L40 32" stroke="rgba(255,255,255,0.9)" stroke-width="2"
+                                fill="none" />
+                        </svg>
+                    </div>
+                    <h1>TransitPay</h1>
+                    <p class="login-subtitle" id="portalSubtitle">Portal Access</p>
+                </div>
+
+                <!-- Tabs -->
+                <div class="portal-tabs">
+                    <button type="button" class="portal-tab active" id="tabTenant" onclick="switchTab('tenant')">
+                        <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                            <path d="M14 16v-1a3 3 0 00-3-3H7a3 3 0 00-3 3v1" stroke="currentColor" stroke-width="1.5"
+                                stroke-linecap="round" />
+                            <circle cx="9" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                        Tenant Login
+                        <span class="tab-badge tab-badge-tenant">Client</span>
+                    </button>
+                    <button type="button" class="portal-tab" id="tabHost" onclick="switchTab('host')">
+                        <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                            <rect x="2" y="3" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.5" />
+                            <path d="M2 7h16" stroke="currentColor" stroke-width="1.5" />
+                            <circle cx="5" cy="5" r="1" fill="currentColor" />
+                            <circle cx="8" cy="5" r="1" fill="currentColor" />
+                        </svg>
+                        Host Login
+                        <span class="tab-badge tab-badge-host">Admin</span>
+                    </button>
+                </div>
+
+                <!-- Error Message -->
+                <div class="error-msg" id="errorMsg">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M8 5v3.5M8 10.5h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span id="errorText">Invalid credentials</span>
+                </div>
+
+                <!-- Success Message -->
+                <div class="success-msg" id="successMsg">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    <span id="successText">Login successful! Redirecting...</span>
+                </div>
+
+                <!-- ==================== TENANT LOGIN PANEL ==================== -->
+                <div class="form-panel active" id="tenantPanel">
+                    <form id="portalLoginForm" onsubmit="return handlePortalLogin(event)">
+                        <div class="form-group">
+                            <label for="tenantCodeInput">Tenant Code</label>
+                            <input type="text" id="tenantCodeInput" class="code-input" placeholder="e.g. HUGA" required
+                                autocomplete="off" maxlength="12">
+                        </div>
+                        <div class="form-group">
+                            <label for="phoneInput">Phone Number</label>
+                            <div class="phone-input-wrapper">
+                                <span class="phone-prefix">+</span>
+                                <input type="tel" id="phoneInput" placeholder="e.g. 60178850938" required
+                                    autocomplete="tel">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-login" id="tenantLoginBtn">
+                            <span>Access Tenant Portal</span>
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                <path d="M3.5 9H14.5M14.5 9L10 4.5M14.5 9L10 13.5" stroke="currentColor"
+                                    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                    </form>
+
+                    <div class="divider">
+                        <span>Secure Tenant Login</span>
+                    </div>
+
+                    <div class="login-footer">
+                        Enter the tenant code and phone number provided by your transport administrator.
+                    </div>
+                </div>
+
+                <!-- ==================== HOST ADMIN LOGIN PANEL ==================== -->
+                <div class="form-panel" id="hostPanel">
+                    <div class="info-box">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2" />
+                            <path d="M8 7v4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+                            <circle cx="8" cy="5" r="0.8" fill="currentColor" />
+                        </svg>
+                        <p>Sign in as a Host Administrator to manage tenants, receipts, and the full TransitPay
+                            dashboard.</p>
+                    </div>
+
+                    <form id="hostLoginForm" onsubmit="return handleHostPortalLogin(event)">
+                        <div class="form-group">
+                            <label for="hostUsername">Username</label>
+                            <input type="text" id="hostUsername" placeholder="Enter your username" required
+                                autocomplete="username">
+                            <span class="input-hint">Your unique login username</span>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="hostName">Full Name</label>
+                                <input type="text" id="hostName" placeholder="e.g. Ahmad Rizal" required
+                                    autocomplete="name">
+                            </div>
+                            <div class="form-group">
+                                <label for="hostHostname">Hostname</label>
+                                <input type="text" id="hostHostname" placeholder="e.g. HQ-Server" required
+                                    autocomplete="off">
+                                <span class="input-hint">Device or server name</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="hostPhone">Phone Number</label>
+                            <div class="phone-input-wrapper">
+                                <span class="phone-prefix">+</span>
+                                <input type="tel" id="hostPhone" placeholder="e.g. 60178850938" required
+                                    autocomplete="tel">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-login host-btn" id="hostLoginBtn">
+                            <span>Sign In as Host Admin</span>
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                <rect x="3" y="4" width="12" height="10" rx="2" stroke="currentColor"
+                                    stroke-width="1.6" />
+                                <path d="M3 7h12" stroke="currentColor" stroke-width="1.6" />
+                                <circle cx="6" cy="5.5" r="0.6" fill="currentColor" />
+                                <circle cx="8" cy="5.5" r="0.6" fill="currentColor" />
+                            </svg>
+                        </button>
+                    </form>
+
+                    <div class="divider">
+                        <span>Host Administrator Access</span>
+                    </div>
+
+                    <div class="login-footer">
+                        Hosts have full access to the TransitPay admin dashboard.
+                    </div>
+                </div>
+
+                <!-- Security Badge -->
+                <div class="security-badge">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 1L2 4v4c0 3.5 2.5 6.5 6 7.5 3.5-1 6-4 6-7.5V4L8 1z" stroke="currentColor"
+                            stroke-width="1.2" fill="none" />
+                        <path d="M5.5 8l2 2 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    <span>Your data is isolated and protected with tenant-level encryption</span>
+                </div>
+            </div>
+        </div>
+    </div><!-- end portalLogin -->
+
+    <!-- ==================== MAIN APP ==================== -->
+    <div id="mainApp" class="page">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon-sm">
+                        <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+                            <rect x="4" y="16" width="40" height="20" rx="4" fill="url(#grad1s)" />
+                            <circle cx="14" cy="38" r="4" fill="#fff" stroke="url(#grad1s)" stroke-width="2" />
+                            <circle cx="34" cy="38" r="4" fill="#fff" stroke="url(#grad1s)" stroke-width="2" />
+                            <defs>
+                                <linearGradient id="grad1s" x1="0" y1="0" x2="48" y2="48">
+                                    <stop offset="0%" stop-color="#6366f1" />
+                                    <stop offset="100%" stop-color="#8b5cf6" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <span class="sidebar-title">TransitPay</span>
+                </div>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-page="dashboard" onclick="navigateTo('dashboard')" id="menuDashboard">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <rect x="2" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+                        <rect x="11" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+                        <rect x="2" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+                        <rect x="11" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" data-page="clients" onclick="navigateTo('clients')" id="menuClients">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M14 16v-1a3 3 0 00-3-3H7a3 3 0 00-3 3v1" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <circle cx="9" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M17 16v-1a3 3 0 00-2-2.83M13 4.17a3 3 0 010 5.66" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span>Clients</span>
+                </li>
+                <li class="menu-item" data-page="newReceipt" onclick="navigateTo('newReceipt')" id="menuNewReceipt">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>New Receipt</span>
+                </li>
+                <li class="menu-item" data-page="trips" onclick="navigateTo('trips')" id="menuTrips">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M3 10C3 10 5 4 10 4C15 4 17 10 17 10C17 10 15 16 10 16C5 16 3 10 3 10Z"
+                            stroke="currentColor" stroke-width="1.5" />
+                        <circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                    <span>Trips</span>
+                </li>
+                <li class="menu-item" data-page="receipts" onclick="navigateTo('receipts')" id="menuReceipts">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path
+                            d="M5 2H15C15.5523 2 16 2.44772 16 3V17L13.5 15.5L11 17L8.5 15.5L6 17L3.5 15.5L2 17V3C2 2.44772 2.44772 2 3 2H5Z"
+                            stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                        <path d="M6 6H14M6 9H14M6 12H10" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" />
+                    </svg>
+                    <span>Receipts</span>
+                </li>
+                <li class="menu-item" data-page="reports" onclick="navigateTo('reports')" id="menuReports">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path
+                            d="M3 17V7L7 3H15C15.5523 3 16 3.44772 16 4V16C16 16.5523 15.5523 17 15 17H4C3.44772 17 3 16.5523 3 16Z"
+                            stroke="currentColor" stroke-width="1.5" />
+                        <path d="M7 3V7H3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M6 10H13M6 13H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>Reports</span>
+                </li>
+                <li class="menu-item" data-page="petrol" onclick="navigateTo('petrol')" id="menuPetrol">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M4 17V5a2 2 0 012-2h5a2 2 0 012 2v12" stroke="currentColor" stroke-width="1.5"
+                            stroke-linejoin="round" />
+                        <path d="M4 17h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <path d="M13 9l2-2 2 2v5a1 1 0 01-1 1h-1" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <rect x="6" y="5" width="5" height="4" rx="0.5" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                    <span>Petrol</span>
+                </li>
+                <li class="menu-item" data-page="email" onclick="navigateTo('email')" id="menuEmail">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M2 6l8 5 8-5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    <span>Email Invoice</span>
+                </li>
+                <div class="menu-divider"></div>
+                <!-- Host-only: Tenant Management -->
+                <li class="menu-item host-only-menu" data-page="tenants" onclick="navigateTo('tenants')"
+                    id="menuTenants" style="display:none;">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <rect x="2" y="3" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M2 7h16" stroke="currentColor" stroke-width="1.5" />
+                        <circle cx="5" cy="5" r="1" fill="currentColor" />
+                        <circle cx="8" cy="5" r="1" fill="currentColor" />
+                        <path d="M6 12h8M6 14.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>Tenant Management</span>
+                </li>
+                <li class="menu-item" data-page="users" onclick="navigateTo('users')" id="menuUsers">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="6" r="3.5" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M3 18v-1.5C3 13.46 5.69 11 9 11h2c3.31 0 6 2.46 6 5.5V18" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>User Accounts</span>
+                </li>
+                <li class="menu-item" data-page="permissions" onclick="navigateTo('permissions')" id="menuPermissions">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <rect x="3" y="9" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" />
+                        <circle cx="10" cy="14" r="1.5" fill="currentColor" />
+                    </svg>
+                    <span>Permissions</span>
+                </li>
+                <li class="menu-item" data-page="settings" onclick="navigateTo('settings')" id="menuSettings">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M10 1v3M10 16v3M1 10h3M16 10h3M3.5 3.5l2 2M14.5 14.5l2 2M3.5 16.5l2-2M14.5 5.5l2-2"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>Settings</span>
+                </li>
+                <li class="menu-item" data-page="dataImport" onclick="navigateTo('dataImport')" id="menuDataImport">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M3 14v3h14v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M10 3v9M7 9l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    <span>Data Import</span>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="user-info" id="userInfo">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-details">
+                        <span class="user-phone" id="userPhone">+1234567890</span>
+                        <span class="user-role">Administrator</span>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="handleLogout()" id="logoutBtn">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M6 15H4C3.44772 15 3 14.5523 3 14V4C3 3.44772 3.44772 3 4 3H6" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" />
+                        <path d="M10 9H16M16 9L13 6M16 9L13 12" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Mobile Top Bar -->
+        <div class="mobile-topbar" id="mobileTopbar">
+            <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()">
+                <span></span><span></span><span></span>
+            </button>
+            <span class="mobile-title">TransitPay</span>
+            <div class="mobile-avatar" id="mobileAvatar">U</div>
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="main-content" id="mainContent">
+
+            <!-- ===== DASHBOARD ===== -->
+            <section id="dashboardSection" class="content-section active">
+                <div class="section-header">
+                    <div>
+                        <h2>Dashboard</h2>
+                        <p class="section-desc">Your transport business at a glance</p>
+                    </div>
+                    <div class="header-actions">
+                        <select id="dashboardPeriod" onchange="updateDashboard()" class="select-input">
+                            <option value="thisMonth">This Month</option>
+                            <option value="lastMonth">Last Month</option>
+                            <option value="last3Months">Last 3 Months</option>
+                            <option value="thisYear">This Year</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-card-primary" id="statTotalEarnings">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Earnings</span>
+                            <span class="stat-value" id="totalEarningsVal">RM 0.00</span>
+                            <span class="stat-change positive" id="earningsChange">+0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-success" id="statTotalTrips">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Trips</span>
+                            <span class="stat-value" id="totalTripsVal">0</span>
+                            <span class="stat-change positive" id="tripsChange">+0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-warning" id="statMonthlyClients">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                                <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2" />
+                                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Monthly Clients</span>
+                            <span class="stat-value" id="monthlyClientsVal">0</span>
+                            <span class="stat-change positive" id="clientsChange">+0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-info" id="statReceiptsGenerated">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Receipts Generated</span>
+                            <span class="stat-value" id="receiptsGeneratedVal">0</span>
+                            <span class="stat-change positive" id="receiptsChange">+0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="border-left: 3px solid #f59e0b;" id="statPetrolSpend">
+                        <div class="stat-icon" style="color:#f59e0b;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M4 20V8a2 2 0 012-2h7a2 2 0 012 2v12" stroke="currentColor" stroke-width="2"
+                                    stroke-linejoin="round" />
+                                <path d="M4 20h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                                <path d="M15 12l2.5-2.5L20 12v6a1 1 0 01-1 1h-1.5" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <rect x="7" y="8" width="5" height="4" rx="0.5" stroke="currentColor"
+                                    stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Petrol This Month</span>
+                            <span class="stat-value" id="dashPetrolVal">RM 0.00</span>
+                            <span class="stat-change positive" id="petrolChange">+0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Earnings Overview</h3>
+                            <div class="chart-legend">
+                                <span class="legend-item"><span class="legend-dot monthly-dot"></span> Monthly</span>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="earningsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Payment Distribution</h3>
+                        </div>
+                        <div class="chart-body chart-body-donut">
+                            <canvas id="paymentChart"></canvas>
+                            <div class="donut-center" id="donutCenter">
+                                <span class="donut-value">RM 0</span>
+                                <span class="donut-label">Total</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="recent-card">
+                    <div class="chart-header">
+                        <h3>Recent Transactions</h3>
+                        <button class="btn btn-ghost" onclick="navigateTo('receipts')">View All</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="recentTable">
+                            <thead>
+                                <tr>
+                                    <th>Receipt #</th>
+                                    <th>Client</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTableBody">
+                                <tr class="empty-row">
+                                    <td colspan="6">
+                                        <div class="empty-state-mini">
+                                            <p>No transactions yet. Create your first receipt!</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== NEW RECEIPT ===== -->
+            <section id="newReceiptSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>New Receipt</h2>
+                        <p class="section-desc">Generate a professional receipt</p>
+                    </div>
+                </div>
+
+                <div class="payment-type-selector" style="grid-template-columns:1fr;max-width:320px;">
+                    <button class="type-btn active" id="typeMonthly" onclick="selectPaymentType('monthly')">
+                        <div class="type-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor"
+                                    stroke-width="1.5" />
+                                <path d="M3 9h18" stroke="currentColor" stroke-width="1.5" />
+                                <path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.5"
+                                    stroke-linecap="round" />
+                                <path d="M7 13h2M11 13h2M15 13h2M7 17h2M11 17h2" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </div>
+                        <span class="type-label">Monthly Payment</span>
+                        <span class="type-desc">Fixed monthly subscription</span>
+                    </button>
+                </div>
+
+                <!-- Receipt Form -->
+                <div class="receipt-form-card">
+                    <form id="receiptForm" onsubmit="return generateReceipt(event)">
+                        <!-- Client Quick Select -->
+                        <div class="client-select-bar">
+                            <div class="form-group" style="margin-bottom:0;flex:1;">
+                                <label for="clientSelect">Select Saved Client</label>
+                                <select id="clientSelect" onchange="onClientSelect()">
+                                    <option value="">-- Type manually or select a client --</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-outline" onclick="navigateTo('clients')"
+                                style="align-self:flex-end;">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Manage Clients
+                            </button>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="clientName">Client Name *</label>
+                                <input type="text" id="clientName" placeholder="Full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="clientPhone">Client Phone</label>
+                                <input type="tel" id="clientPhone" placeholder="Phone number">
+                            </div>
+                            <div class="form-group">
+                                <label for="receiptDate">Date *</label>
+                                <input type="date" id="receiptDate" required>
+                            </div>
+                        </div>
+
+                        <!-- Monthly Payment Fields -->
+                        <div id="monthlyFields" class="conditional-fields active">
+                            <h3 class="form-section-title">Monthly Payment Details</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="monthlyMonth">Month *</label>
+                                    <select id="monthlyMonth" required>
+                                        <option value="">Select Month</option>
+                                        <option value="January">January</option>
+                                        <option value="February">February</option>
+                                        <option value="March">March</option>
+                                        <option value="April">April</option>
+                                        <option value="May">May</option>
+                                        <option value="June">June</option>
+                                        <option value="July">July</option>
+                                        <option value="August">August</option>
+                                        <option value="September">September</option>
+                                        <option value="October">October</option>
+                                        <option value="November">November</option>
+                                        <option value="December">December</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="monthlyYear">Year *</label>
+                                    <input type="number" id="monthlyYear" placeholder="2026" min="2020" max="2040"
+                                        required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="monthlyAmount">Amount (RM) *</label>
+                                    <input type="number" id="monthlyAmount" placeholder="0.00" step="0.01" min="0"
+                                        required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Per-Trip Payment Fields (kept in DOM but hidden, for existing data compat) -->
+                        <div id="tripFields" class="conditional-fields" style="display:none;"></div>
+
+                        <!-- Payment Status -->
+                        <div class="form-group" style="margin-top: 1.5rem;">
+                            <label for="paymentStatus">Payment Status *</label>
+                            <div class="payment-status-group">
+                                <label class="status-radio-label">
+                                    <input type="radio" name="paymentStatus" id="paymentStatus" value="Paid" checked>
+                                    <span class="status-radio-btn status-paid">✅ PAID</span>
+                                </label>
+                                <label class="status-radio-label">
+                                    <input type="radio" name="paymentStatus" value="Unpaid">
+                                    <span class="status-radio-btn status-unpaid">❌ UNPAID</span>
+                                </label>
+                                <label class="status-radio-label">
+                                    <input type="radio" name="paymentStatus" value="Pending">
+                                    <span class="status-radio-btn status-pending">⏳ PENDING</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-ghost" onclick="resetReceiptForm()">Clear Form</button>
+                            <button type="submit" class="btn btn-primary" id="generateReceiptBtn">
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                    <path d="M14 2H4a2 2 0 00-2 2v12l3-2 3 2 3-2 3 2V4a2 2 0 00-2-2z"
+                                        stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                                </svg>
+                                Generate Receipt
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ===== TRIPS ===== -->
+            <section id="tripsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Trip Management</h2>
+                        <p class="section-desc">Track and manage all your trips</p>
+                    </div>
+                    <div class="header-actions">
+                        <select id="tripFilterMonth" onchange="filterTrips()" class="select-input">
+                            <option value="all">All Months</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="navigateTo('newReceipt'); selectPaymentType('trip');">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                    stroke-linecap="round" />
+                            </svg>
+                            Add Trip
+                        </button>
+                    </div>
+                </div>
+                <div class="table-card">
+                    <div class="table-wrapper">
+                        <table class="data-table" id="tripsTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Client</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Amount</th>
+                                    <th>Receipt #</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tripsTableBody">
+                                <tr class="empty-row">
+                                    <td colspan="6">
+                                        <div class="empty-state-mini">
+                                            <p>No trips recorded yet.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== RECEIPTS LIST ===== -->
+            <section id="receiptsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>All Receipts</h2>
+                        <p class="section-desc">View and manage all generated receipts</p>
+                    </div>
+                    <div class="header-actions">
+                        <select id="receiptFilter" onchange="filterReceipts()" class="select-input">
+                            <option value="all">All</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="receipts-grid" id="receiptsGrid">
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect x="12" y="6" width="40" height="52" rx="4" stroke="currentColor" stroke-width="2"
+                                    opacity="0.3" />
+                                <path d="M22 20h20M22 28h20M22 36h12" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" opacity="0.3" />
+                            </svg>
+                        </div>
+                        <h3>No Receipts Yet</h3>
+                        <p>Start by creating your first receipt</p>
+                        <button class="btn btn-primary" onclick="navigateTo('newReceipt')">Create Receipt</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== REPORTS ===== -->
+            <section id="reportsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Monthly Reports</h2>
+                        <p class="section-desc">Generate and download end-of-month summaries</p>
+                    </div>
+                </div>
+                <div class="report-controls">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="reportMonth">Month</label>
+                            <select id="reportMonth" class="select-input">
+                                <option value="0">January</option>
+                                <option value="1">February</option>
+                                <option value="2">March</option>
+                                <option value="3">April</option>
+                                <option value="4">May</option>
+                                <option value="5">June</option>
+                                <option value="6">July</option>
+                                <option value="7">August</option>
+                                <option value="8">September</option>
+                                <option value="9">October</option>
+                                <option value="10">November</option>
+                                <option value="11">December</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="reportYear">Year</label>
+                            <input type="number" id="reportYear" value="2026" min="2020" max="2040"
+                                class="select-input">
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:flex-end;">
+                            <button class="btn btn-primary" onclick="generateMonthlyReport()" id="genReportBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M14 10v3a1 1 0 01-1 1H3a1 1 0 01-1-1v-3M8 2v9M5 8l3 3 3-3"
+                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                                Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="reportContent" class="report-content" style="display:none;"></div>
+            </section>
+
+            <!-- ===== CLIENTS MANAGEMENT ===== -->
+            <section id="clientsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Client Management</h2>
+                        <p class="section-desc">Add and manage your transport clients</p>
+                    </div>
+                </div>
+
+                <!-- Add / Edit Client Form -->
+                <div class="receipt-form-card" style="margin-bottom: 2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Add New Client</h3>
+                    <form id="clientForm" onsubmit="return saveClient(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="newClientName">Full Name *</label>
+                                <input type="text" id="newClientName" placeholder="Client full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newClientPhone">Phone Number *</label>
+                                <input type="tel" id="newClientPhone" placeholder="Phone number" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newClientEmail">Email</label>
+                                <input type="email" id="newClientEmail" placeholder="client@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="newClientAddress">Address</label>
+                                <input type="text" id="newClientAddress" placeholder="Home or pickup address">
+                            </div>
+                            <div class="form-group">
+                                <label for="newClientRoute">Default Route</label>
+                                <input type="text" id="newClientRoute" placeholder="e.g., Home to Office">
+                            </div>
+                            <div class="form-group">
+                                <label for="newClientMonthlyRate">Monthly Rate (RM)</label>
+                                <input type="number" id="newClientMonthlyRate" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="newClientNotes">Notes</label>
+                                <input type="text" id="newClientNotes" placeholder="Additional notes">
+                            </div>
+                        </div>
+                        <input type="hidden" id="editingClientId" value="">
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-ghost" onclick="clearClientForm()">Clear</button>
+                            <button type="submit" class="btn btn-primary" id="saveClientBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Add Client
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Clients List -->
+                <div class="table-card">
+                    <div class="chart-header">
+                        <h3>All Clients (<span id="clientCount">0</span>)</h3>
+                        <input type="text" id="clientSearch" placeholder="Search clients..." oninput="loadClients()"
+                            style="max-width:250px;">
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="clientsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Address</th>
+                                    <th>Route</th>
+                                    <th>Monthly Rate</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientsTableBody">
+                                <tr class="empty-row">
+                                    <td colspan="6">
+                                        <div class="empty-state-mini">
+                                            <p>No clients added yet. Add your first client above!</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== USER ACCOUNTS ===== -->
+            <section id="usersSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>User Accounts</h2>
+                        <p class="section-desc">Manage who can log in and use the system</p>
+                    </div>
+                </div>
+
+                <!-- Add User Form -->
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Add New User</h3>
+                    <form id="userForm" onsubmit="return saveUser(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="newUserName">Full Name *</label>
+                                <input type="text" id="newUserName" placeholder="User full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserPhone">Phone Number * (used to login)</label>
+                                <div class="phone-input-wrapper">
+                                    <span class="phone-prefix">+</span>
+                                    <input type="tel" id="newUserPhone" placeholder="Phone number" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserRole">Role</label>
+                                <select id="newUserRole">
+                                    <option value="Admin">Admin</option>
+                                    <option value="Operator">Operator</option>
+                                    <option value="Viewer">Viewer</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserStatus">Status</label>
+                                <select id="newUserStatus">
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                        <input type="hidden" id="editingUserId" value="">
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-ghost" onclick="clearUserForm()">Clear</button>
+                            <button type="submit" class="btn btn-primary" id="saveUserBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Add User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Users List -->
+                <div class="table-card">
+                    <div class="chart-header">
+                        <h3>All Users (<span id="userCount">0</span>)</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr class="empty-row">
+                                    <td colspan="6">
+                                        <div class="empty-state-mini">
+                                            <p>No user accounts created yet.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== PETROL EXPENSES ===== -->
+            <section id="petrolSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Petrol Expenses</h2>
+                        <p class="section-desc">Track monthly fuel costs and upload receipts</p>
+                    </div>
+                </div>
+
+                <!-- Petrol Dashboard -->
+                <div class="stats-grid" style="margin-bottom:2rem;">
+                    <div class="stat-card stat-card-primary">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M4 20V8a2 2 0 012-2h7a2 2 0 012 2v12" stroke="currentColor" stroke-width="2"
+                                    stroke-linejoin="round" />
+                                <path d="M4 20h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                                <path d="M15 12l2.5-2.5L20 12v6a1 1 0 01-1 1h-1.5" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <rect x="7" y="8" width="5" height="4" rx="0.5" stroke="currentColor"
+                                    stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">This Month Petrol</span>
+                            <span class="stat-value" id="petrolThisMonth">RM 0.00</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-warning">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Petrol Spent</span>
+                            <span class="stat-value" id="petrolTotalSpent">RM 0.00</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-success">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Receipts Uploaded</span>
+                            <span class="stat-value" id="petrolReceiptCount">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-info">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M3 3v18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                                <path d="M7 16l4-4 4 4 5-5" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Avg Monthly Petrol</span>
+                            <span class="stat-value" id="petrolAvgMonthly">RM 0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Petrol Chart -->
+                <div class="chart-card" style="margin-bottom:2rem;">
+                    <div class="chart-header">
+                        <h3>Monthly Petrol Spending</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="petrolChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Add Petrol Expense Form -->
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Log Petrol Expense</h3>
+                    <form id="petrolForm" onsubmit="return savePetrolExpense(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="petrolDate">Date *</label>
+                                <input type="date" id="petrolDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="petrolAmount">Amount (RM) *</label>
+                                <input type="number" id="petrolAmount" placeholder="0.00" step="0.01" min="0" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="petrolLiters">Liters</label>
+                                <input type="number" id="petrolLiters" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="petrolCarPlate">Car Number Plate *</label>
+                                <select id="petrolCarPlate" required>
+                                    <option value="">-- Select Car --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-top:1rem;">
+                            <label for="petrolNotes">Notes</label>
+                            <input type="text" id="petrolNotes" placeholder="Additional notes (optional)">
+                        </div>
+                        <!-- File Upload -->
+                        <div class="form-group" style="margin-top:1rem;">
+                            <label>Upload Receipt (PDF, JPEG, PNG)</label>
+                            <div class="file-upload-area" id="petrolDropZone">
+                                <input type="file" id="petrolFileInput" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
+                                    onchange="handlePetrolFileSelect(event)" style="display:none;">
+                                <div class="file-upload-content"
+                                    onclick="document.getElementById('petrolFileInput').click()">
+                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
+                                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                        <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.5"
+                                            stroke-linecap="round" stroke-linejoin="round" />
+                                        <path d="M12 18v-6M9 15l3-3 3 3" stroke="currentColor" stroke-width="1.5"
+                                            stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                    <p>Click to upload or drag &amp; drop</p>
+                                    <span>PDF, JPEG, PNG, WebP (max 5MB)</span>
+                                </div>
+                                <div class="file-preview" id="petrolFilePreview" style="display:none;"></div>
+                            </div>
+                        </div>
+                        <input type="hidden" id="editingPetrolId" value="">
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-ghost" onclick="clearPetrolForm()">Clear</button>
+                            <button type="submit" class="btn btn-primary" id="savePetrolBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Log Expense
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Petrol Expenses List -->
+                <div class="table-card">
+                    <div class="chart-header">
+                        <h3>Petrol History (<span id="petrolCount">0</span>)</h3>
+                        <select id="petrolFilterMonth" onchange="loadPetrolExpenses()" class="select-input">
+                            <option value="all">All Months</option>
+                        </select>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="petrolTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Liters</th>
+                                    <th>Car Plate</th>
+                                    <th>Receipt</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="petrolTableBody">
+                                <tr class="empty-row">
+                                    <td colspan="6">
+                                        <div class="empty-state-mini">
+                                            <p>No petrol expenses logged yet.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== USER ACCOUNTS ===== -->
+            <section id="usersSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>User Accounts</h2>
+                        <p class="section-desc">Manage who can log in and their roles</p>
+                    </div>
+                    <div class="header-actions">
+                        <span class="badge badge-admin" id="userCount" style="font-size:0.8rem;padding:0.4rem 0.8rem;">0
+                            Users</span>
+                    </div>
+                </div>
+
+                <!-- Role Summary -->
+                <div class="perm-role-summary-bar" id="userPermSummaryList"
+                    style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;"></div>
+
+                <!-- Add/Edit User Form -->
+                <div class="receipt-form-card" style="margin-bottom:2rem;" data-perm-module="users"
+                    data-perm-action="create">
+                    <h3 class="form-section-title" id="userFormTitle" style="margin-top:0;">Add New User</h3>
+                    <form id="userForm" onsubmit="return saveUser(event)">
+                        <input type="hidden" id="editingUserId" value="">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="newUserName">Full Name *</label>
+                                <input type="text" id="newUserName" placeholder="e.g. Ahmad Rizal" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserPhone">Phone Number *</label>
+                                <div class="phone-input-wrapper">
+                                    <span class="phone-prefix">+</span>
+                                    <input type="tel" id="newUserPhone" placeholder="e.g. 60178850938" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserRole">Role *</label>
+                                <select id="newUserRole">
+                                    <option value="Admin">Admin — Full access</option>
+                                    <option value="Operator" selected>Operator — Can add/edit</option>
+                                    <option value="Viewer">Viewer — Read only</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserStatus">Status</label>
+                                <select id="newUserStatus">
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-actions" style="margin-top:1.25rem;">
+                            <button type="button" class="btn btn-ghost" onclick="clearUserForm()">Clear</button>
+                            <button type="submit" class="btn btn-primary" id="saveUserBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Add User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Role Description Cards -->
+                <div class="perm-role-grid" style="margin-bottom:2rem;">
+                    <div class="perm-role-card" style="border-left:3px solid #6366f1;">
+                        <div class="perm-role-header">
+                            <span class="perm-role-badge" style="background:#6366f120;color:#6366f1;">Admin</span>
+                            <span class="perm-locked-tag">🔒 Full Access</span>
+                        </div>
+                        <p class="perm-role-desc">Can do everything — create, edit, delete records, manage users and
+                            settings.</p>
+                    </div>
+                    <div class="perm-role-card" style="border-left:3px solid #10b981;">
+                        <div class="perm-role-header">
+                            <span class="perm-role-badge" style="background:#10b98120;color:#10b981;">Operator</span>
+                        </div>
+                        <p class="perm-role-desc">Can add and edit records. Cannot delete or access settings.
+                            Permissions are customisable.</p>
+                    </div>
+                    <div class="perm-role-card" style="border-left:3px solid #f59e0b;">
+                        <div class="perm-role-header">
+                            <span class="perm-role-badge" style="background:#f59e0b20;color:#f59e0b;">Viewer</span>
+                        </div>
+                        <p class="perm-role-desc">Read-only access to dashboards and reports. Cannot create or modify
+                            anything.</p>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="table-card">
+                    <div class="chart-header">
+                        <h3>All Users (<span id="usersTableCount">0</span>)</h3>
+                        <button class="btn btn-ghost" onclick="navigateTo('permissions')" style="font-size:0.8rem;">
+                            ⚙️ Manage Permissions
+                        </button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== PERMISSIONS ===== -->
+            <section id="permissionsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Permissions</h2>
+                        <p class="section-desc">Control what each role can see and do</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-ghost" onclick="navigateTo('users')" style="font-size:0.85rem;">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.4" />
+                                <path d="M3 14v-1a4 4 0 018 0v1" stroke="currentColor" stroke-width="1.4"
+                                    stroke-linecap="round" />
+                            </svg>
+                            Manage Users
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Info Banner -->
+                <div class="tenant-info-banner" style="margin-bottom:2rem;">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <rect x="3" y="9" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" />
+                        <circle cx="10" cy="14" r="1.5" fill="currentColor" />
+                    </svg>
+                    <div>
+                        <strong>Role-Based Access Control</strong>
+                        <p>Customise what Operators and Viewers can access. Admin and Tenant roles are fixed and cannot
+                            be changed. Tick <strong>V</strong>=View, <strong>C</strong>=Create,
+                            <strong>E</strong>=Edit, <strong>D</strong>=Delete for each module.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Role Summary Cards -->
+                <div class="perm-role-grid" id="permRoleSummary" style="margin-bottom:2rem;"></div>
+
+                <!-- Permission Matrix -->
+                <div class="receipt-form-card" style="padding:0;overflow:hidden;">
+                    <div id="permMatrix">Loading...</div>
+                </div>
+            </section>
+
+            <!-- ===== SETTINGS (Locations & Car Plates) ===== -->
+            <section id="settingsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Settings</h2>
+                        <p class="section-desc">Manage locations and car number plates</p>
+                    </div>
+                </div>
+
+                <!-- Location Management -->
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Manage Locations (From / To Dropdowns)</h3>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">Add or remove locations
+                        that appear in the From/To and Route dropdowns.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="newLocationName">New Location Name</label>
+                            <input type="text" id="newLocationName" placeholder="e.g., Bukit Bintang">
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:flex-end;">
+                            <button type="button" class="btn btn-primary" onclick="addLocation()">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Add Location
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tag-list" id="locationsList" style="margin-top:1rem;"></div>
+                </div>
+
+                <!-- Car Number Plate Management -->
+                <div class="receipt-form-card">
+                    <h3 class="form-section-title" style="margin-top:0;">Manage Car Number Plates</h3>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">Add or remove car number
+                        plates that appear in the Petrol section.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="newCarPlate">Car Number Plate</label>
+                            <input type="text" id="newCarPlate" placeholder="e.g., BPE813"
+                                style="text-transform:uppercase;">
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:flex-end;">
+                            <button type="button" class="btn btn-primary" onclick="addCarPlate()">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Add Plate
+                            </button>
+                        </div>
+                    </div>
+                    <div class="tag-list" id="carPlatesList" style="margin-top:1rem;"></div>
+                </div>
+            </section>
+
+            <!-- ===== EMAIL INVOICING ===== -->
+            <section id="emailSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Email Invoice</h2>
+                        <p class="section-desc">Send monthly invoices to clients via email</p>
+                    </div>
+                </div>
+
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Send Monthly Invoice</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="invoiceMonth">Invoice Month</label>
+                            <select id="invoiceMonth">
+                                <option value="January">January</option>
+                                <option value="February">February</option>
+                                <option value="March">March</option>
+                                <option value="April">April</option>
+                                <option value="May">May</option>
+                                <option value="June">June</option>
+                                <option value="July">July</option>
+                                <option value="August">August</option>
+                                <option value="September">September</option>
+                                <option value="October">October</option>
+                                <option value="November">November</option>
+                                <option value="December">December</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="invoiceYear">Year</label>
+                            <input type="number" id="invoiceYear" value="2026" min="2020" max="2040">
+                        </div>
+                        <div class="form-group">
+                            <label for="invoiceClient">Client</label>
+                            <select id="invoiceClient">
+                                <option value="all">All Clients with Email</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label for="invoiceSubject">Email Subject</label>
+                        <input type="text" id="invoiceSubject" value="Monthly Transport Invoice - TransitPay">
+                    </div>
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label for="invoiceMessage">Email Message</label>
+                        <textarea id="invoiceMessage" rows="4"
+                            style="width:100%;padding:0.75rem;border-radius:var(--radius-md);border:1px solid var(--border-color);background:var(--surface-color);color:var(--text-primary);font-family:var(--font-sans);font-size:0.9rem;resize:vertical;">Dear {CLIENT_NAME},
+
+Please find attached your transport invoice for {MONTH} {YEAR}.
+
+Amount Due: RM {AMOUNT}
+Route: {ROUTE}
+
+Thank you for choosing TransitPay.
+
+Best regards,
+TransitPay Team</textarea>
+                    </div>
+                    <div class="form-actions" style="margin-top:1.5rem;">
+                        <button type="button" class="btn btn-outline" onclick="previewInvoiceEmail()">Preview
+                            Email</button>
+                        <button type="button" class="btn btn-primary" onclick="sendInvoiceEmails()">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M14 2L7 9M14 2l-5 12-2-5-5-2 12-5z" stroke="currentColor" stroke-width="1.5"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Send Invoice(s)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Email History -->
+                <div class="table-card">
+                    <div class="chart-header">
+                        <h3>Invoice History (<span id="emailCount">0</span>)</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="emailTable">
+                            <thead>
+                                <tr>
+                                    <th>Date Sent</th>
+                                    <th>Client</th>
+                                    <th>Email</th>
+                                    <th>Period</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="emailTableBody">
+                                <tr class="empty-row">
+                                    <td colspan="6">
+                                        <div class="empty-state-mini">
+                                            <p>No invoices sent yet.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== DATA IMPORT ===== -->
+            <section id="dataImportSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Data Import</h2>
+                        <p class="section-desc">Upload old data for record keeping</p>
+                    </div>
+                </div>
+
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Import Old Data (CSV)</h3>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">Upload a CSV file
+                        containing your old receipts or petrol data. Download the sample template below to see the
+                        correct format.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="importType">Data Type</label>
+                            <select id="importType">
+                                <option value="receipts">Transport Receipts</option>
+                                <option value="petrol">Petrol Expenses</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:flex-end;gap:0.5rem;">
+                            <button type="button" class="btn btn-outline" onclick="downloadSampleCSV()">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M3 10v3h10v-3" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M8 2v7M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                Download Sample
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label>Upload CSV File</label>
+                        <div class="file-upload-area" id="importDropZone">
+                            <input type="file" id="importFileInput" accept=".csv" onchange="handleImportFile(event)"
+                                style="display:none;">
+                            <div class="file-upload-content"
+                                onclick="document.getElementById('importFileInput').click()">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
+                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                    <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M12 18v-6M9 15l3-3 3 3" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <p>Click to upload CSV file</p>
+                                <span>CSV format only</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="importPreview" style="display:none;margin-top:1rem;"></div>
+                    <div class="form-actions" style="margin-top:1.5rem;">
+                        <button type="button" class="btn btn-primary" onclick="confirmImport()" id="confirmImportBtn"
+                            style="display:none;">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 8l4 4 6-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                            Confirm Import
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sample Format Info -->
+                <div class="receipt-form-card">
+                    <h3 class="form-section-title" style="margin-top:0;">CSV Format Guide</h3>
+                    <div style="margin-bottom:1.5rem;">
+                        <h4 style="color:var(--primary-400);margin-bottom:0.5rem;font-size:0.85rem;">Transport Receipts
+                            CSV Columns:</h4>
+                        <code
+                            style="display:block;background:var(--surface-color);padding:1rem;border-radius:var(--radius-md);font-size:0.8rem;color:var(--text-secondary);line-height:1.8;overflow-x:auto;white-space:pre;">date,clientName,clientPhone,clientAddress,type,amount,route,paymentMethod,notes
+2025-01-15,Ahmad bin Ali,+60123456789,Jalan Sultan,monthly,500.00,Kuala Lumpur → Shah Alam,Cash,January payment
+2025-01-20,Siti Aminah,+60129876543,Taman Melawati,trip,35.00,Ampang → KLIA,Bank Transfer,Airport trip</code>
+                    </div>
+                    <div>
+                        <h4 style="color:var(--primary-400);margin-bottom:0.5rem;font-size:0.85rem;">Petrol Expenses CSV
+                            Columns:</h4>
+                        <code
+                            style="display:block;background:var(--surface-color);padding:1rem;border-radius:var(--radius-md);font-size:0.8rem;color:var(--text-secondary);line-height:1.8;overflow-x:auto;white-space:pre;">date,amount,liters,carPlate,notes
+2025-01-10,120.00,38.5,BPE813,Full tank
+2025-01-18,85.50,27.2,SMN1538,Half tank</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TENANT MANAGEMENT (HOST ONLY) ==================== -->
+            <section id="tenantsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Tenant Management</h2>
+                        <p class="section-desc">Create and manage tenant accounts. Each tenant has isolated data.</p>
+                    </div>
+                    <div class="header-actions">
+                        <span class="badge badge-admin" id="totalTenantsCount"
+                            style="font-size:0.8rem;padding:0.4rem 0.8rem;">0 Tenants</span>
+                    </div>
+                </div>
+
+                <!-- Tenant Info Banner -->
+                <div class="tenant-info-banner">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M10 9v4M10 7h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <div>
+                        <strong>Multi-Tenant Mode Active</strong>
+                        <p>Each tenant gets a unique code and phone login. Tenants can only see their own data —
+                            dashboards, receipts, clients, and reports are fully isolated.</p>
+                    </div>
+                </div>
+
+                <!-- Add Tenant Form -->
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;color:var(--text-accent);">
+                        <span id="tenantFormTitle">Add New Tenant</span>
+                    </h3>
+                    <form onsubmit="return saveTenant(event)">
+                        <input type="hidden" id="editingTenantId" value="">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="tenantCode">Tenant Code</label>
+                                <input type="text" id="tenantCode" placeholder="e.g. TPY-001"
+                                    style="text-transform:uppercase;font-family:var(--font-mono);letter-spacing:0.08em;"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tenantName">Business / Client Name</label>
+                                <input type="text" id="tenantName" placeholder="e.g. Acme Transport Sdn Bhd" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tenantPhone">Login Phone Number</label>
+                                <div class="phone-input-wrapper">
+                                    <span class="phone-prefix">+</span>
+                                    <input type="tel" id="tenantPhone" placeholder="Phone number for login" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="tenantStatus">Status</label>
+                                <select id="tenantStatus">
+                                    <option value="Active">Active</option>
+                                    <option value="Suspended">Suspended</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="grid-column:1/-1;">
+                                <label for="tenantNotes">Notes (optional)</label>
+                                <textarea id="tenantNotes" rows="2"
+                                    placeholder="Additional notes about this tenant..."></textarea>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+                            <button type="submit" class="btn btn-primary" id="saveTenantBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Add Tenant
+                            </button>
+                            <button type="button" class="btn btn-outline" onclick="clearTenantForm()">Clear</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tenant Cards Grid -->
+                <div id="tenantCardsGrid" class="tenant-cards-grid">
+                    <!-- Filled dynamically -->
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ===== RECEIPT PREVIEW MODAL ===== -->
+    <div class="modal-overlay" id="receiptModal">
+        <div class="modal-content receipt-modal">
+            <div class="modal-header-bar">
+                <h3>Receipt Preview</h3>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" onclick="printReceipt()" id="printReceiptBtn">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M4 6V1h8v5M4 12H2V7h12v5h-2" stroke="currentColor" stroke-width="1.2"
+                                stroke-linejoin="round" />
+                            <rect x="4" y="10" width="8" height="5" rx="0.5" stroke="currentColor" stroke-width="1.2" />
+                        </svg>
+                        Print
+                    </button>
+                    <button class="btn btn-ghost modal-close" onclick="closeReceiptModal()">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                            <path d="M5 5L13 13M13 5L5 13" stroke="currentColor" stroke-width="1.5"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="receipt-preview" id="receiptPreview"></div>
+        </div>
+    </div>
+
+    <!-- ===== REPORT PREVIEW MODAL ===== -->
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal-content report-modal-content">
+            <div class="modal-header-bar">
+                <h3>Monthly Report</h3>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" onclick="printReport()" id="printReportBtn">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M4 6V1h8v5M4 12H2V7h12v5h-2" stroke="currentColor" stroke-width="1.2"
+                                stroke-linejoin="round" />
+                            <rect x="4" y="10" width="8" height="5" rx="0.5" stroke="currentColor" stroke-width="1.2" />
+                        </svg>
+                        Print
+                    </button>
+                    <button class="btn btn-ghost modal-close" onclick="closeReportModal()">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                            <path d="M5 5L13 13M13 5L5 13" stroke="currentColor" stroke-width="1.5"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="report-preview" id="reportPreview"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <!-- Firebase Database Layer (must load before app modules) -->
+    <script src="js/firebase-db.js"></script>
+
+    <!-- JS Modules (load order matters: tenants before app) -->
+    <script src="js/tenants.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/receipts.js"></script>
+    <script src="js/trips.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/clients.js"></script>
+    <script src="js/users.js"></script>
+    <script src="js/permissions.js"></script>
+    <script src="js/petrol.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/email.js"></script>
+    <script src="js/data-import.js"></script>
+    <script>
+        /* ============================
+           PORTAL INTEGRATION
+           ============================ */
+
+        // Portal login uses the same session system as app.js + tenants.js
+        // Override DOMContentLoaded to check for portal session first
+
+        const PORTAL_REGISTRY_KEY = 'transitpay_registry';
+
+        function ensureHugaTenant() {
+            const data = localStorage.getItem(PORTAL_REGISTRY_KEY);
+            let registry;
+            if (data) {
+                registry = JSON.parse(data);
+            } else {
+                registry = {
+                    host: {
+                        phone: '+60178850938',
+                        name: 'Host Administrator',
+                        createdAt: new Date().toISOString()
+                    },
+                    tenants: []
+                };
+            }
+            const hugaExists = registry.tenants.find(t => t.code === 'HUGA');
+            if (!hugaExists) {
+                registry.tenants.push({
+                    id: 'TN-' + Date.now(),
+                    code: 'HUGA',
+                    name: 'Huga Services',
+                    phone: '+60178850938',
+                    status: 'Active',
+                    notes: 'Primary tenant account',
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            }
+            if (!registry.host) {
+                registry.host = {
+                    phone: '+60178850938',
+                    name: 'Host Administrator',
+                    createdAt: new Date().toISOString()
+                };
+            }
+            localStorage.setItem(PORTAL_REGISTRY_KEY, JSON.stringify(registry));
+            return registry;
+        }
+
+        // ==================== TAB SWITCHING ====================
+        function switchTab(tab) {
+            const tenantTab = document.getElementById('tabTenant');
+            const hostTab = document.getElementById('tabHost');
+            const tenantPanel = document.getElementById('tenantPanel');
+            const hostPanel = document.getElementById('hostPanel');
+            const subtitle = document.getElementById('portalSubtitle');
+            const errorMsg = document.getElementById('errorMsg');
+            const successMsg = document.getElementById('successMsg');
+
+            errorMsg.classList.remove('visible');
+            successMsg.classList.remove('visible');
+
+            if (tab === 'tenant') {
+                tenantTab.classList.add('active');
+                hostTab.classList.remove('active');
+                tenantPanel.classList.add('active');
+                hostPanel.classList.remove('active');
+                subtitle.textContent = 'Tenant Portal Access';
+            } else {
+                hostTab.classList.add('active');
+                tenantTab.classList.remove('active');
+                hostPanel.classList.add('active');
+                tenantPanel.classList.remove('active');
+                subtitle.textContent = 'Host Administrator';
+            }
+        }
+
+        function showPortalError(message) {
+            const errorMsg = document.getElementById('errorMsg');
+            document.getElementById('errorText').textContent = message;
+            errorMsg.classList.add('visible');
+            setTimeout(() => { errorMsg.classList.remove('visible'); }, 5000);
+        }
+
+        function loadSavedHostCredentials() {
+            const saved = localStorage.getItem('transitpay_host_credentials');
+            if (saved) {
+                try {
+                    const creds = JSON.parse(saved);
+                    if (creds.username) document.getElementById('hostUsername').value = creds.username;
+                    if (creds.name) document.getElementById('hostName').value = creds.name;
+                    if (creds.hostname) document.getElementById('hostHostname').value = creds.hostname;
+                    if (creds.phone) document.getElementById('hostPhone').value = creds.phone.replace(/^\+/, '');
+                } catch (e) { }
+            }
+        }
+
+        // ==================== PORTAL INIT ====================
+        (function portalInit() {
+            ensureHugaTenant();
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeFromUrl = urlParams.get('code');
+            const modeFromUrl = urlParams.get('mode');
+
+            if (codeFromUrl) {
+                const codeInput = document.getElementById('tenantCodeInput');
+                if (codeInput) codeInput.value = codeFromUrl.toUpperCase();
+            }
+
+            if (modeFromUrl === 'host') {
+                switchTab('host');
+            }
+
+            loadSavedHostCredentials();
+        })();
+
+        // ==================== TENANT PORTAL LOGIN ====================
+        function handlePortalLogin(e) {
+            e.preventDefault();
+            const loginBtn = document.getElementById('tenantLoginBtn');
+            const errorMsg = document.getElementById('errorMsg');
+            const successMsg = document.getElementById('successMsg');
+            errorMsg.classList.remove('visible');
+            successMsg.classList.remove('visible');
+
+            const tenantCode = document.getElementById('tenantCodeInput').value.trim().toUpperCase();
+            const phone = document.getElementById('phoneInput').value.trim();
+
+            if (!tenantCode) { showPortalError('Please enter your tenant code.'); return false; }
+            if (!phone || phone.length < 6) { showPortalError('Please enter a valid phone number.'); return false; }
+
+            loginBtn.classList.add('loading');
+
+            setTimeout(() => {
+                const registry = getRegistry();
+                const normalizedPhone = '+' + phone.replace(/^\+/, '');
+                const tenant = registry.tenants.find(t => t.code === tenantCode);
+                if (!tenant) { loginBtn.classList.remove('loading'); showPortalError('Invalid tenant code.'); return; }
+                if (tenant.status !== 'Active') { loginBtn.classList.remove('loading'); showPortalError('Account suspended.'); return; }
+                const tenantPhone = '+' + tenant.phone.replace(/^\+/, '');
+                if (tenantPhone !== normalizedPhone) { loginBtn.classList.remove('loading'); showPortalError('Phone does not match.'); return; }
+
+                // Use tenants.js session system
+                const session = {
+                    type: 'tenant', tenantCode: tenantCode, tenantId: tenant.id,
+                    tenantName: tenant.name, phone: normalizedPhone, name: tenant.name,
+                    role: 'Tenant', loginTime: new Date().toISOString()
+                };
+                saveSession(session);
+                activateTenantScope(tenantCode);
+
+                appData.user = {
+                    phone: normalizedPhone, name: tenant.name, role: 'Tenant',
+                    tenantCode: tenantCode, loginTime: session.loginTime
+                };
+                saveAppData(appData);
+
+                loginBtn.classList.remove('loading');
+                successMsg.querySelector('#successText').textContent = 'Welcome, ' + tenant.name + '! Loading...';
+                successMsg.classList.add('visible');
+
+                setTimeout(() => {
+                    // Hide portal login, show main app
+                    document.getElementById('portalLogin').classList.remove('active');
+                    showApp();
+                    showToast('Welcome, ' + tenant.name + '!', 'success');
+                }, 800);
+            }, 600);
+            return false;
+        }
+
+        // ==================== HOST ADMIN PORTAL LOGIN ====================
+        function handleHostPortalLogin(e) {
+            e.preventDefault();
+            const loginBtn = document.getElementById('hostLoginBtn');
+            const errorMsg = document.getElementById('errorMsg');
+            const successMsg = document.getElementById('successMsg');
+            errorMsg.classList.remove('visible');
+            successMsg.classList.remove('visible');
+
+            const username = document.getElementById('hostUsername').value.trim();
+            const name = document.getElementById('hostName').value.trim();
+            const hostname = document.getElementById('hostHostname').value.trim();
+            const phone = document.getElementById('hostPhone').value.trim();
+
+            if (!username) { showPortalError('Please enter your username.'); return false; }
+            if (!name) { showPortalError('Please enter your full name.'); return false; }
+            if (!hostname) { showPortalError('Please enter a hostname.'); return false; }
+            if (!phone || phone.length < 6) { showPortalError('Please enter a valid phone number.'); return false; }
+
+            loginBtn.classList.add('loading');
+
+            setTimeout(() => {
+                const registry = getRegistry();
+                const normalizedPhone = '+' + phone.replace(/^\+/, '');
+
+                registry.host = {
+                    phone: normalizedPhone, name: name, username: username, hostname: hostname,
+                    createdAt: (registry.host && registry.host.createdAt) ? registry.host.createdAt : new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                };
+                saveRegistry(registry);
+
+                localStorage.setItem('transitpay_host_credentials', JSON.stringify({
+                    username: username, name: name, hostname: hostname, phone: normalizedPhone
+                }));
+
+                const session = {
+                    type: 'host', tenantCode: 'HOST', phone: normalizedPhone,
+                    name: name, username: username, hostname: hostname,
+                    role: 'Host Admin', loginTime: new Date().toISOString()
+                };
+                saveSession(session);
+                activateTenantScope('HOST');
+
+                appData.user = {
+                    phone: normalizedPhone, name: name, username: username,
+                    hostname: hostname, role: 'Host Admin', tenantCode: 'HOST',
+                    loginTime: session.loginTime
+                };
+                saveAppData(appData);
+
+                loginBtn.classList.remove('loading');
+                successMsg.querySelector('#successText').textContent = 'Welcome, ' + name + '! Opening dashboard...';
+                successMsg.classList.add('visible');
+
+                setTimeout(() => {
+                    document.getElementById('portalLogin').classList.remove('active');
+                    showApp();
+                    showToast('Welcome, ' + name + '!', 'success');
+                }, 800);
+            }, 600);
+            return false;
+        }
+    </script>
+
+</body>
+
+</html>
