@@ -16,16 +16,16 @@ function getRegistry() {
     // First-time: pre-seed with host admin + a test tenant
     const initial = {
         host: {
-            phone: '+60178850938',
-            name: 'Host Administrator',
+            phone: '+60123456789',
+            name: 'System Admin',
             createdAt: new Date().toISOString()
         },
         tenants: [
             {
                 id: 'TN-' + Date.now(),
-                code: 'HUGA',
-                name: 'Huga Services',
-                phone: '+60178850938',
+                code: 'DEMO',
+                name: 'Demo Transport',
+                phone: '+60123456789',
                 status: 'Active',
                 notes: 'Primary tenant account',
                 createdAt: new Date().toISOString(),
@@ -98,7 +98,7 @@ function handleHostLogin(phone) {
         // First-time setup — register this phone as host
         registry.host = {
             phone: normalizedPhone,
-            name: 'Host Administrator',
+            name: 'System Admin',
             createdAt: new Date().toISOString()
         };
         saveRegistry(registry);
@@ -421,11 +421,11 @@ function saveTenant(e) {
                 petrolExpenses: [],
                 locations: [
                     'Kuala Lumpur', 'Petaling Jaya', 'Shah Alam', 'Subang Jaya',
-                    'Putrajaya', 'Cyberjaya', 'Klang', 'Ampang', 'Cheras',
+                    'Putra Heights', 'Cyberjaya', 'Klang', 'Ampang', 'Cheras',
                     'Kepong', 'Setapak', 'Wangsa Maju', 'Sri Hartamas',
                     'Mont Kiara', 'Bangsar', 'KLIA', 'KLIA2'
                 ],
-                carPlates: [],
+                carPlates: ['BEP 813'],
                 emailHistory: [],
                 nextReceiptNumber: 1001
             }));
