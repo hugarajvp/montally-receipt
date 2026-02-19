@@ -11,7 +11,25 @@ let currentSession = JSON.parse(sessionStorage.getItem('transitpay_session') || 
 function getRegistry() {
     const data = localStorage.getItem(REGISTRY_KEY);
     if (data) {
-        return JSON.parse(data);
+        const registry = JSON.parse(data);
+        // Migrate old default phone number if still present
+        const OLD_PHONE = '+60198765432';
+        const NEW_PHONE = '+60123456789';
+        let changed = false;
+        if (registry.host && registry.host.phone === OLD_PHONE) {
+            registry.host.phone = NEW_PHONE;
+            registry.host.name = 'System Admin';
+            changed = true;
+        }
+        const demo = registry.tenants ? registry.tenants.find(t => t.code === 'DEMO') : null;
+        if (demo && demo.phone === OLD_PHONE) {
+            demo.phone = NEW_PHONE;
+            changed = true;
+        }
+        if (changed) {
+            localStorage.setItem(REGISTRY_KEY, JSON.stringify(registry));
+        }
+        return registry;
     }
     // First-time: pre-seed with host admin + a test tenant
     const initial = {

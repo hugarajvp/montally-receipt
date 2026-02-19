@@ -1686,22 +1686,35 @@ TransitPay Team</textarea>
                     tenants: []
                 };
             }
-            const demoExists = registry.tenants.find(t => t.code === 'DEMO');
-            if (!demoExists) {
+
+            // Migrate old default phone number if still present
+            const OLD_PHONE = '+60198765432';
+            const NEW_PHONE = '+60123456789';
+            if (registry.host && registry.host.phone === OLD_PHONE) {
+                registry.host.phone = NEW_PHONE;
+                registry.host.name = 'System Admin';
+            }
+
+            const demoTenant = registry.tenants.find(t => t.code === 'DEMO');
+            if (!demoTenant) {
                 registry.tenants.push({
                     id: 'TN-' + Date.now(),
                     code: 'DEMO',
                     name: 'Demo Transport',
-                    phone: '+60123456789',
+                    phone: NEW_PHONE,
                     status: 'Active',
                     notes: 'Primary tenant account',
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 });
+            } else if (demoTenant.phone === OLD_PHONE) {
+                // Update the existing DEMO tenant's phone too
+                demoTenant.phone = NEW_PHONE;
             }
+
             if (!registry.host) {
                 registry.host = {
-                    phone: '+60123456789',
+                    phone: NEW_PHONE,
                     name: 'System Admin',
                     createdAt: new Date().toISOString()
                 };
@@ -1797,12 +1810,23 @@ TransitPay Team</textarea>
 
             setTimeout(() => {
                 const registry = getRegistry();
+                console.log('[DEBUG] Registry:', JSON.stringify(registry, null, 2));
+                console.log('[DEBUG] Looking for tenant code:', tenantCode);
+                console.log('[DEBUG] Available tenant codes:', registry.tenants.map(t => t.code));
                 const normalizedPhone = '+' + phone.replace(/^\+/, '');
+                console.log('[DEBUG] Normalized phone:', normalizedPhone);
                 const tenant = registry.tenants.find(t => t.code === tenantCode);
-                if (!tenant) { loginBtn.classList.remove('loading'); showPortalError('Invalid tenant code.'); return; }
+                if (!tenant) {
+                    console.log('[DEBUG] FAIL: No tenant found with code:', tenantCode);
+                    loginBtn.classList.remove('loading'); showPortalError('Invalid tenant code. Available codes: ' + registry.tenants.map(t => t.code).join(', ')); return;
+                }
+                console.log('[DEBUG] Found tenant:', tenant.name, 'phone:', tenant.phone);
                 if (tenant.status !== 'Active') { loginBtn.classList.remove('loading'); showPortalError('Account suspended.'); return; }
                 const tenantPhone = '+' + tenant.phone.replace(/^\+/, '');
-                if (tenantPhone !== normalizedPhone) { loginBtn.classList.remove('loading'); showPortalError('Phone does not match.'); return; }
+                if (tenantPhone !== normalizedPhone) {
+                    console.log('[DEBUG] FAIL: Phone mismatch. Expected:', tenantPhone, 'Got:', normalizedPhone);
+                    loginBtn.classList.remove('loading'); showPortalError('Phone does not match. Expected: ' + tenantPhone); return;
+                }
 
                 // Use tenants.js session system
                 const session = {
