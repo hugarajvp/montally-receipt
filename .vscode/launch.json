@@ -1,0 +1,10 @@
+{
+    "configurations": [
+        {
+            "type": "msedge",
+            "name": "http://transitpay.online",
+            "request": "launch",
+            "url": "http://transitpay.online"
+        }
+    ]
+}
