@@ -203,8 +203,6 @@ function showApp() {
 
     // Update menu visibility based on role
     updateMenuVisibility();
-    // Apply role-based permissions to UI
-    if (typeof applyPermissions === 'function') applyPermissions();
 
     // Start Firestore real-time sync & migrate old data
     const tenantCode = window._ACTIVE_TENANT_CODE || 'HOST';
@@ -249,10 +247,6 @@ function navigateTo(page) {
     if (page === 'clients') loadClients();
     if (page === 'users') {
         loadUsers();
-        if (typeof updateUserPermSummary === 'function') updateUserPermSummary();
-    }
-    if (page === 'permissions') {
-        if (typeof loadPermissionsPage === 'function') loadPermissionsPage();
     }
     if (page === 'petrol') {
         loadPetrolExpenses();

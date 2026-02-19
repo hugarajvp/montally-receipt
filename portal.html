@@ -318,15 +318,7 @@
                     </svg>
                     <span>User Accounts</span>
                 </li>
-                <li class="menu-item" data-page="permissions" onclick="navigateTo('permissions')" id="menuPermissions">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <rect x="3" y="9" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.5" />
-                        <path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" stroke-width="1.5"
-                            stroke-linecap="round" />
-                        <circle cx="10" cy="14" r="1.5" fill="currentColor" />
-                    </svg>
-                    <span>Permissions</span>
-                </li>
+
                 <li class="menu-item" data-page="settings" onclick="navigateTo('settings')" id="menuSettings">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                         <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" />
@@ -1238,9 +1230,6 @@
                 <div class="table-card">
                     <div class="chart-header">
                         <h3>All Users (<span id="usersTableCount">0</span>)</h3>
-                        <button class="btn btn-ghost" onclick="navigateTo('permissions')" style="font-size:0.8rem;">
-                            ⚙️ Manage Permissions
-                        </button>
                     </div>
                     <div class="table-wrapper">
                         <table class="data-table">
@@ -1260,50 +1249,6 @@
                 </div>
             </section>
 
-            <!-- ===== PERMISSIONS ===== -->
-            <section id="permissionsSection" class="content-section">
-                <div class="section-header">
-                    <div>
-                        <h2>Permissions</h2>
-                        <p class="section-desc">Control what each role can see and do</p>
-                    </div>
-                    <div class="header-actions">
-                        <button class="btn btn-ghost" onclick="navigateTo('users')" style="font-size:0.85rem;">
-                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-                                <circle cx="8" cy="5" r="3" stroke="currentColor" stroke-width="1.4" />
-                                <path d="M3 14v-1a4 4 0 018 0v1" stroke="currentColor" stroke-width="1.4"
-                                    stroke-linecap="round" />
-                            </svg>
-                            Manage Users
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Info Banner -->
-                <div class="tenant-info-banner" style="margin-bottom:2rem;">
-                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <rect x="3" y="9" width="14" height="9" rx="2" stroke="currentColor" stroke-width="1.5" />
-                        <path d="M7 9V6a3 3 0 016 0v3" stroke="currentColor" stroke-width="1.5"
-                            stroke-linecap="round" />
-                        <circle cx="10" cy="14" r="1.5" fill="currentColor" />
-                    </svg>
-                    <div>
-                        <strong>Role-Based Access Control</strong>
-                        <p>Customise what Operators and Viewers can access. Admin and Tenant roles are fixed and cannot
-                            be changed. Tick <strong>V</strong>=View, <strong>C</strong>=Create,
-                            <strong>E</strong>=Edit, <strong>D</strong>=Delete for each module.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Role Summary Cards -->
-                <div class="perm-role-grid" id="permRoleSummary" style="margin-bottom:2rem;"></div>
-
-                <!-- Permission Matrix -->
-                <div class="receipt-form-card" style="padding:0;overflow:hidden;">
-                    <div id="permMatrix">Loading...</div>
-                </div>
-            </section>
 
             <!-- ===== SETTINGS (Locations & Car Plates) ===== -->
             <section id="settingsSection" class="content-section">
@@ -1711,7 +1656,7 @@ TransitPay Team</textarea>
     <script src="js/reports.js"></script>
     <script src="js/clients.js"></script>
     <script src="js/users.js"></script>
-    <script src="js/permissions.js"></script>
+
     <script src="js/petrol.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/email.js"></script>
