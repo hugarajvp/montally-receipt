@@ -17,8 +17,8 @@ const firebaseConfig = {
 
 // ==================== INIT FIREBASE ====================
 let db = null;
-let firebaseReady = false;
-let registrySynced = false;
+window.firebaseReady = false;
+window.registrySynced = false;
 
 
 function initFirebase() {
@@ -27,11 +27,11 @@ function initFirebase() {
             firebase.initializeApp(firebaseConfig);
         }
         db = firebase.firestore();
-        firebaseReady = true;
+        window.firebaseReady = true;
         console.log('[TransitPay] Firebase connected ✅');
     } catch (err) {
         console.warn('[TransitPay] Firebase init failed, using localStorage fallback:', err);
-        firebaseReady = false;
+        window.firebaseReady = false;
     }
 }
 
@@ -68,11 +68,11 @@ function getRegistryDocRef() {
 
 // ==================== REGISTRY (Tenant List) ====================
 async function fsGetRegistry() {
-    if (!firebaseReady) return null;
+    if (!window.firebaseReady) return null;
     try {
         const snap = await getRegistryDocRef().get();
         if (snap.exists) {
-            registrySynced = true;
+            window.registrySynced = true;
             return snap.data();
         }
         return null;
@@ -83,29 +83,11 @@ async function fsGetRegistry() {
 }
 
 // Function to wait for registry sync
-async function waitForRegistrySync(timeoutMs = 5000) {
-    if (!firebaseReady) return false;
-    if (registrySynced) return true;
-
-    return new Promise((resolve) => {
-        const start = Date.now();
-        const check = setInterval(async () => {
-            if (registrySynced) {
-                clearInterval(check);
-                resolve(true);
-            } else if (Date.now() - start > timeoutMs) {
-                clearInterval(check);
-                // Try one last manual fetch
-                const reg = await fsGetRegistry();
-                resolve(!!reg);
-            }
-        }, 200);
-    });
-}
+// waitForRegistrySync moved to js/utils.js
 
 
 async function fsSaveRegistry(registry) {
-    if (!firebaseReady) return;
+    if (!window.firebaseReady) return;
     try {
         await getRegistryDocRef().set(registry, { merge: true });
     } catch (err) {
@@ -115,7 +97,7 @@ async function fsSaveRegistry(registry) {
 
 // ==================== APP DATA (Per Tenant) ====================
 async function fsGetAppData(tenantCode) {
-    if (!firebaseReady) return null;
+    if (!window.firebaseReady) return null;
     try {
         const snap = await getTenantDocRef(tenantCode).get();
         return snap.exists ? snap.data() : null;
@@ -126,7 +108,7 @@ async function fsGetAppData(tenantCode) {
 }
 
 async function fsSaveAppData(tenantCode, data) {
-    if (!firebaseReady) return;
+    if (!window.firebaseReady) return;
     try {
         // Remove undefined values (Firestore doesn't accept them)
         const clean = JSON.parse(JSON.stringify(data));
@@ -139,7 +121,7 @@ async function fsSaveAppData(tenantCode, data) {
 // ==================== SYNC: localStorage → Firestore ====================
 // Migrates existing localStorage data to Firestore on first login
 async function migrateLocalStorageToFirestore(tenantCode) {
-    if (!firebaseReady) return;
+    if (!window.firebaseReady) return;
     const code = sanitizeTenantCode(tenantCode);
     const localKey = getTenantStorageKey(code);
     const localRaw = localStorage.getItem(localKey);
@@ -160,7 +142,7 @@ async function migrateLocalStorageToFirestore(tenantCode) {
 }
 
 async function migrateRegistryToFirestore() {
-    if (!firebaseReady) return;
+    if (!window.firebaseReady) return;
     const localRaw = localStorage.getItem('transitpay_registry');
     if (!localRaw) return;
     try {
@@ -183,7 +165,7 @@ async function migrateRegistryToFirestore() {
 window._fsPatched = false;
 
 async function patchWithFirestore() {
-    if (window._fsPatched || !firebaseReady) return;
+    if (window._fsPatched || !window.firebaseReady) return;
     window._fsPatched = true;
 
     // Migrate existing data first
@@ -197,7 +179,7 @@ async function patchWithFirestore() {
 let _unsubscribeTenantListener = null;
 
 function startRealtimeSync(tenantCode) {
-    if (!firebaseReady) return;
+    if (!window.firebaseReady) return;
     if (_unsubscribeTenantListener) _unsubscribeTenantListener();
 
     const code = sanitizeTenantCode(tenantCode);
@@ -240,7 +222,7 @@ window.saveAppDataCloud = async function (data) {
     localStorage.setItem(key, JSON.stringify(data));
 
     // Then save to Firestore in background
-    if (firebaseReady) {
+    if (window.firebaseReady) {
         const tenantCode = getActiveTenantCode();
         await fsSaveAppData(tenantCode, data);
     }
@@ -251,7 +233,7 @@ window.getAppDataCloud = async function () {
     const tenantCode = getActiveTenantCode();
 
     // Try Firestore first
-    if (firebaseReady) {
+    if (window.firebaseReady) {
         const fsData = await fsGetAppData(tenantCode);
         if (fsData) {
             // Also update localStorage cache
@@ -269,7 +251,7 @@ window.getAppDataCloud = async function () {
 
 // ==================== ENHANCED Registry ====================
 window.getRegistryCloud = async function () {
-    if (firebaseReady) {
+    if (window.firebaseReady) {
         const fsReg = await fsGetRegistry();
         if (fsReg) {
             localStorage.setItem('transitpay_registry', JSON.stringify(fsReg));
@@ -282,7 +264,7 @@ window.getRegistryCloud = async function () {
 
 window.saveRegistryCloud = async function (registry) {
     localStorage.setItem('transitpay_registry', JSON.stringify(registry));
-    if (firebaseReady) {
+    if (window.firebaseReady) {
         await fsSaveRegistry(registry);
     }
 };

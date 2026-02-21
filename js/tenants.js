@@ -105,14 +105,17 @@ function switchLoginMode(mode) {
     }
 }
 
+// ==================== HELPERS ====================
+// normalizePhone moved to js/utils.js
+
 // ==================== HOST LOGIN ====================
 async function handleHostLogin(phone) {
     const registry = getRegistry();
-    const normalizedPhone = '+' + phone.replace(/^\+/, '');
+    const normalizedPhone = normalizePhone(phone);
 
     if (registry.host) {
         // Host exists — validate phone
-        const hostPhone = '+' + registry.host.phone.replace(/^\+/, '');
+        const hostPhone = normalizePhone(registry.host.phone);
         if (hostPhone !== normalizedPhone) {
             showToast('Host phone number does not match.', 'error');
             return false;
@@ -164,7 +167,7 @@ async function handleHostLogin(phone) {
 // ==================== TENANT LOGIN ====================
 async function handleTenantLogin(tenantCode, phone) {
     const registry = getRegistry();
-    const normalizedPhone = '+' + phone.replace(/^\+/, '');
+    const normalizedPhone = normalizePhone(phone);
     const code = tenantCode.toUpperCase().trim();
 
     // Find tenant
@@ -181,7 +184,7 @@ async function handleTenantLogin(tenantCode, phone) {
     }
 
     // Validate phone
-    const tenantPhone = '+' + tenant.phone.replace(/^\+/, '');
+    const tenantPhone = normalizePhone(tenant.phone);
     if (tenantPhone !== normalizedPhone) {
         showToast('Phone number does not match this tenant account.', 'error');
         return false;
@@ -439,7 +442,7 @@ function saveTenant(e) {
             id: 'TN-' + Date.now(),
             code,
             name,
-            phone: '+' + phone.replace(/^\+/, ''),
+            phone: normalizePhone(phone),
             status,
             notes,
             createdAt: new Date().toISOString(),
