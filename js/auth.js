@@ -176,21 +176,27 @@ async function handlePortalLogin(e) {
         let tenant = registry.tenants ? registry.tenants.find(t => (t.code || '').toUpperCase() === searchCode) : null;
 
         // DISCOVERY MODE: If registry sync failed or tenant is missing, try a direct document fetch
-        if (!tenant && window.firebaseReady && typeof getAppDataCloud === 'function') {
+        if (!tenant && window.firebaseReady) {
             console.log(`[Portal] Tenant "${searchCode}" not in registry. Trying Direct Discovery...`);
+
+            // Wait a moment for auth to stabilize
+            await new Promise(r => setTimeout(r, 1000));
+
             activateTenantScope(searchCode);
             try {
-                const cloudData = await getAppDataCloud();
-                if (cloudData && cloudData.user && (cloudData.user.tenantCode || '').toUpperCase() === searchCode) {
-                    tenant = {
-                        id: cloudData.user.tenantId || ('TN-' + Date.now()),
-                        code: searchCode,
-                        name: cloudData.user.tenantName || searchCode,
-                        phone: cloudData.user.phone,
-                        status: 'Active',
-                        isDiscovered: true
-                    };
-                    console.log('[Portal] Success! Tenant discovered via direct fetch ✅');
+                if (typeof getAppDataCloud === 'function') {
+                    const cloudData = await getAppDataCloud();
+                    if (cloudData && cloudData.user && (cloudData.user.tenantCode || '').toUpperCase() === searchCode) {
+                        tenant = {
+                            id: cloudData.user.tenantId || ('TN-' + Date.now()),
+                            code: searchCode,
+                            name: cloudData.user.tenantName || searchCode,
+                            phone: cloudData.user.phone,
+                            status: 'Active',
+                            isDiscovered: true
+                        };
+                        console.log('[Portal] Success! Tenant discovered via direct fetch ✅');
+                    }
                 }
             } catch (discoveryErr) {
                 console.warn('[Portal] Direct discovery failed:', discoveryErr.message);

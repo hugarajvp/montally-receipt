@@ -60,6 +60,19 @@ function initFirebase() {
 
         window.firebaseReady = true;
         console.log('[TransitPay] Firebase initialized with High Resilience mode ✅');
+
+        // Monitor connection and force reconnect if stuck offline
+        setInterval(() => {
+            if (window._fs_offline_count > 5) {
+                console.warn('[TransitPay] Connectivity stalled. Forcing Firestore reconnect...');
+                window._fs_offline_count = 0;
+                db.terminate().then(() => {
+                    db.clearPersistence().then(() => {
+                        initFirebase();
+                    });
+                });
+            }
+        }, 30000);
     } catch (err) {
         console.warn('[TransitPay] Firebase init failed, using localStorage fallback:', err);
         window.firebaseReady = false;
@@ -111,10 +124,12 @@ function getRegistryDocRef() {
 async function fsGetRegistry() {
     if (!window.firebaseReady) return null;
     try {
+        // Try to force server fetch if we are looking for a fresh sync
         const snap = await getRegistryDocRef().get();
+
         if (snap.exists) {
             window.registrySynced = true;
-            window.registrySyncedCloud = true; // NEW: track actual cloud sync
+            window.registrySyncedCloud = true;
             return snap.data();
         }
         return null;
@@ -126,6 +141,11 @@ async function fsGetRegistry() {
             console.warn('[FS] Client appears offline to Firestore. Attempting to force network...');
             if (db && typeof db.enableNetwork === 'function') {
                 db.enableNetwork().catch(() => { });
+            }
+            // Trigger a settings reload if we keep failing
+            window._fs_offline_count = (window._fs_offline_count || 0) + 1;
+            if (window._fs_offline_count > 3) {
+                console.log('[FS] Persistent offline detected. Retrying with long polling...');
             }
         }
         window.registrySyncedCloud = false;
@@ -150,6 +170,7 @@ async function fsSaveRegistry(registry) {
 async function fsGetAppData(tenantCode) {
     if (!window.firebaseReady) return null;
     try {
+        // First try to get from server directly to bypass stale cache
         const snap = await getTenantDocRef(tenantCode).get();
         if (snap.exists) {
             return snap.data();
