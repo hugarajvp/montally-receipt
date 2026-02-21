@@ -173,7 +173,29 @@ async function handlePortalLogin(e) {
         const registry = getRegistry();
         const normalizedPhone = normalizePhone(phone);
         const searchCode = tenantCode.toUpperCase();
-        const tenant = registry.tenants ? registry.tenants.find(t => (t.code || '').toUpperCase() === searchCode) : null;
+        let tenant = registry.tenants ? registry.tenants.find(t => (t.code || '').toUpperCase() === searchCode) : null;
+
+        // DISCOVERY MODE: If registry sync failed or tenant is missing, try a direct document fetch
+        if (!tenant && window.firebaseReady && typeof getAppDataCloud === 'function') {
+            console.log(`[Portal] Tenant "${searchCode}" not in registry. Trying Direct Discovery...`);
+            activateTenantScope(searchCode);
+            try {
+                const cloudData = await getAppDataCloud();
+                if (cloudData && cloudData.user && (cloudData.user.tenantCode || '').toUpperCase() === searchCode) {
+                    tenant = {
+                        id: cloudData.user.tenantId || ('TN-' + Date.now()),
+                        code: searchCode,
+                        name: cloudData.user.tenantName || searchCode,
+                        phone: cloudData.user.phone,
+                        status: 'Active',
+                        isDiscovered: true
+                    };
+                    console.log('[Portal] Success! Tenant discovered via direct fetch ✅');
+                }
+            } catch (discoveryErr) {
+                console.warn('[Portal] Direct discovery failed:', discoveryErr.message);
+            }
+        }
 
         if (!tenant) {
             console.log('[DEBUG] FAIL: No tenant found with code:', searchCode);

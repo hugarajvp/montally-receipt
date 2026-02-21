@@ -27,8 +27,28 @@ function initFirebase() {
             firebase.initializeApp(firebaseConfig);
         }
         db = firebase.firestore();
+
+        // Enable long polling to bypass potential proxy/firewall issues
+        db.settings({ experimentalForceLongPolling: true });
+
+        // Try anonymous login to satisfy "authenticated only" security rules
+        if (firebase.auth) {
+            firebase.auth().signInAnonymously()
+                .then(() => console.log('[TransitPay] Anonymous auth success ✅'))
+                .catch(err => console.warn('[TransitPay] Anonymous auth failed (this is usually OK):', err.message));
+        }
+
+        // Enable offline persistence
+        db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+            if (err.code == 'failed-precondition') {
+                console.warn('[TransitPay] Persistence failed: Multiple tabs open');
+            } else if (err.code == 'unimplemented') {
+                console.warn('[TransitPay] Persistence failed: Browser not supported');
+            }
+        });
+
         window.firebaseReady = true;
-        console.log('[TransitPay] Firebase connected ✅');
+        console.log('[TransitPay] Firebase connected with resilience ✅');
     } catch (err) {
         console.warn('[TransitPay] Firebase init failed, using localStorage fallback:', err);
         window.firebaseReady = false;
@@ -87,7 +107,15 @@ async function fsGetRegistry() {
         }
         return null;
     } catch (err) {
-        console.error('[FS] getRegistry error:', err);
+        console.error('[FS] getRegistry error:', err.message);
+
+        // If it says "offline", try to force network enablement
+        if (err.message && err.message.toLowerCase().includes('offline')) {
+            console.warn('[FS] Client appears offline to Firestore. Attempting to force network...');
+            if (db && typeof db.enableNetwork === 'function') {
+                db.enableNetwork().catch(() => { });
+            }
+        }
         return null;
     }
 }
@@ -112,7 +140,12 @@ async function fsGetAppData(tenantCode) {
         const snap = await getTenantDocRef(tenantCode).get();
         return snap.exists ? snap.data() : null;
     } catch (err) {
-        console.error('[FS] getAppData error:', err);
+        console.error('[FS] getAppData error:', err.message);
+        if (err.message && err.message.toLowerCase().includes('offline')) {
+            if (db && typeof db.enableNetwork === 'function') {
+                db.enableNetwork().catch(() => { });
+            }
+        }
         return null;
     }
 }

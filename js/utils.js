@@ -63,6 +63,7 @@ async function waitForRegistrySync(timeoutMs = 8000, requiredTenantCode = null) 
 
     // 3. Polling loop
     return new Promise((resolve) => {
+        let fetchRunning = false;
         const check = setInterval(async () => {
             const currentRegRaw = localStorage.getItem('transitpay_registry');
             let hasRequired = !requiredTenantCode;
@@ -70,8 +71,23 @@ async function waitForRegistrySync(timeoutMs = 8000, requiredTenantCode = null) 
             if (currentRegRaw && requiredTenantCode) {
                 try {
                     const reg = JSON.parse(currentRegRaw);
-                    hasRequired = reg.tenants && reg.tenants.some(t => t.code.toUpperCase() === requiredTenantCode.toUpperCase());
+                    hasRequired = reg.tenants && reg.tenants.some(t => {
+                        const code = (t.code || '').toUpperCase();
+                        return code === requiredTenantCode.toUpperCase();
+                    });
                 } catch (e) { }
+            }
+
+            // If we don't have what we need yet, and firebase is ready, and we aren't already fetching... retry!
+            if (!hasRequired && window.firebaseReady && !fetchRunning && (Date.now() - start < timeoutMs - 1000)) {
+                fetchRunning = true;
+                console.log('[TransitPay] Retrying cloud registry sync...');
+                getRegistryCloud().then(res => {
+                    fetchRunning = false;
+                    if (res) console.log('[TransitPay] Late sync success ✅');
+                }).catch(() => {
+                    fetchRunning = false;
+                });
             }
 
             // Already synced or reached timeout
@@ -80,6 +96,6 @@ async function waitForRegistrySync(timeoutMs = 8000, requiredTenantCode = null) 
                 console.log(`[TransitPay] Sync check complete. Has target ${requiredTenantCode}: ${hasRequired}`);
                 resolve(!!currentRegRaw);
             }
-        }, 300);
+        }, 1000); // Poll every 1s instead of 300ms since we might be doing network calls
     });
 }
