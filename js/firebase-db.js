@@ -35,11 +35,21 @@ function initFirebase() {
     }
 }
 
+// function to retry init if failed
+function ensureFirebase() {
+    if (window.firebaseReady) return true;
+    if (typeof firebase !== 'undefined') {
+        initFirebase();
+        return window.firebaseReady;
+    }
+    return false;
+}
+
 // Call init immediately
 if (typeof firebase !== 'undefined') {
     initFirebase();
 } else {
-    console.warn('[TransitPay] Firebase SDK not loaded yet.');
+    console.warn('[TransitPay] Firebase SDK not loaded yet. Will retry on first data call.');
 }
 
 // ==================== HELPERS ====================
@@ -251,7 +261,9 @@ window.getAppDataCloud = async function () {
 
 // ==================== ENHANCED Registry ====================
 window.getRegistryCloud = async function () {
-    if (window.firebaseReady) {
+    if (!ensureFirebase()) {
+        console.warn('[TransitPay] Firebase not ready for getRegistryCloud, using local.');
+    } else {
         const fsReg = await fsGetRegistry();
         if (fsReg) {
             localStorage.setItem('transitpay_registry', JSON.stringify(fsReg));

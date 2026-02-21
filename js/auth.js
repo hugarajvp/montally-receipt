@@ -12,8 +12,15 @@ function ensureDemoTenant() {
     const data = localStorage.getItem(PORTAL_REGISTRY_KEY);
     let registry;
     if (data) {
-        registry = JSON.parse(data);
-    } else {
+        try {
+            registry = JSON.parse(data);
+        } catch (e) {
+            console.error('[Portal] Failed to parse registry data:', e);
+            registry = null;
+        }
+    }
+
+    if (!registry) {
         registry = {
             host: {
                 phone: '+60123456789',
@@ -23,6 +30,9 @@ function ensureDemoTenant() {
             tenants: []
         };
     }
+
+    // Ensure tenants array exists
+    if (!registry.tenants) registry.tenants = [];
 
     // Migrate old default phone number if still present
     const OLD_PHONE = '+60198765432';
@@ -45,7 +55,6 @@ function ensureDemoTenant() {
             updatedAt: new Date().toISOString()
         });
     } else if (demoTenant.phone === OLD_PHONE) {
-        // Update the existing DEMO tenant's phone too
         demoTenant.phone = NEW_PHONE;
     }
 
@@ -163,12 +172,14 @@ async function handlePortalLogin(e) {
 
         const registry = getRegistry();
         const normalizedPhone = normalizePhone(phone);
-        const tenant = registry.tenants.find(t => t.code === tenantCode);
+        const searchCode = tenantCode.toUpperCase();
+        const tenant = registry.tenants ? registry.tenants.find(t => (t.code || '').toUpperCase() === searchCode) : null;
 
         if (!tenant) {
-            console.log('[DEBUG] FAIL: No tenant found with code:', tenantCode);
+            console.log('[DEBUG] FAIL: No tenant found with code:', searchCode);
+            console.log('[DEBUG] Available codes:', registry.tenants ? registry.tenants.map(t => (t.code || '').toUpperCase()) : 'none');
             if (loginBtn) loginBtn.classList.remove('loading');
-            showPortalError('Invalid tenant code. Please check and try again.');
+            showPortalError(`Invalid tenant code "${tenantCode}". Please check and try again.`);
             return false;
         }
 
