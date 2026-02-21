@@ -106,7 +106,7 @@ function switchLoginMode(mode) {
 }
 
 // ==================== HOST LOGIN ====================
-function handleHostLogin(phone) {
+async function handleHostLogin(phone) {
     const registry = getRegistry();
     const normalizedPhone = '+' + phone.replace(/^\+/, '');
 
@@ -142,6 +142,12 @@ function handleHostLogin(phone) {
     // Set app data scope to host
     activateTenantScope('HOST');
 
+    // FETCH FROM CLOUD BEFORE FIRST SAVE
+    if (typeof getAppDataCloud === 'function') {
+        const cloudData = await getAppDataCloud();
+        if (cloudData) appData = cloudData;
+    }
+
     // Set user in app data
     appData.user = {
         phone: normalizedPhone,
@@ -154,8 +160,9 @@ function handleHostLogin(phone) {
     return true;
 }
 
+
 // ==================== TENANT LOGIN ====================
-function handleTenantLogin(tenantCode, phone) {
+async function handleTenantLogin(tenantCode, phone) {
     const registry = getRegistry();
     const normalizedPhone = '+' + phone.replace(/^\+/, '');
     const code = tenantCode.toUpperCase().trim();
@@ -196,6 +203,12 @@ function handleTenantLogin(tenantCode, phone) {
     // Set app data scope to this tenant
     activateTenantScope(code);
 
+    // FETCH FROM CLOUD BEFORE FIRST SAVE
+    if (typeof getAppDataCloud === 'function') {
+        const cloudData = await getAppDataCloud();
+        if (cloudData) appData = cloudData;
+    }
+
     // Ensure tenant data structure exists
     if (!appData.user) {
         appData = getAppData(); // Re-init fresh data for new tenant
@@ -212,6 +225,7 @@ function handleTenantLogin(tenantCode, phone) {
 
     return true;
 }
+
 
 // ==================== LOGIN AS TENANT (from Host) ====================
 function loginAsTenant(tenantCode) {
@@ -538,7 +552,7 @@ function deleteTenant(tenantId) {
 }
 
 // ==================== TENANT LIST RENDERING ====================
-function loadTenants() {
+async function loadTenants() {
     const registry = getRegistry();
     const grid = document.getElementById('tenantCardsGrid');
     const countEl = document.getElementById('totalTenantsCount');
@@ -571,7 +585,27 @@ function loadTenants() {
 
         // Get tenant data stats
         const tenantKey = getTenantStorageKey(tenant.code);
-        const tenantData = JSON.parse(localStorage.getItem(tenantKey) || '{}');
+        const tenantRaw = localStorage.getItem(tenantKey);
+        let tenantData = {};
+        let statsLoading = false;
+
+        if (tenantRaw) {
+            tenantData = JSON.parse(tenantRaw);
+        } else if (typeof fsGetAppData === 'function') {
+            // Stats aren't local - we'll need to fetch them
+            statsLoading = true;
+            // Trigger background fetch
+            fsGetAppData(tenant.code).then(data => {
+                if (data) {
+                    localStorage.setItem(tenantKey, JSON.stringify(data));
+                    // Re-render only if still on the tenants page
+                    if (document.getElementById('tenantsSection').classList.contains('active')) {
+                        loadTenants();
+                    }
+                }
+            });
+        }
+
         const receiptsCount = (tenantData.receipts || []).length;
         const clientsCount = (tenantData.clients || []).length;
         const totalEarnings = (tenantData.receipts || []).reduce((s, r) => s + (r.total || 0), 0);
@@ -587,19 +621,25 @@ function loadTenants() {
                     <p class="tenant-card-phone">${tenant.phone}</p>
                     ${tenant.notes ? `<p class="tenant-card-notes">${tenant.notes}</p>` : ''}
                 </div>
-                <div class="tenant-card-stats">
-                    <div class="tenant-stat">
-                        <span class="tenant-stat-value">${receiptsCount}</span>
-                        <span class="tenant-stat-label">Receipts</span>
-                    </div>
-                    <div class="tenant-stat">
-                        <span class="tenant-stat-value">${clientsCount}</span>
-                        <span class="tenant-stat-label">Clients</span>
-                    </div>
-                    <div class="tenant-stat">
-                        <span class="tenant-stat-value">RM ${totalEarnings.toFixed(0)}</span>
-                        <span class="tenant-stat-label">Earnings</span>
-                    </div>
+                <div class="tenant-card-stats ${statsLoading ? 'loading-stats' : ''}">
+                    ${statsLoading ? `
+                        <div style="grid-column:1/-1;text-align:center;padding:0.5rem;font-size:0.75rem;color:var(--text-muted);">
+                            Fetching cloud stats...
+                        </div>
+                    ` : `
+                        <div class="tenant-stat">
+                            <span class="tenant-stat-value">${receiptsCount}</span>
+                            <span class="tenant-stat-label">Receipts</span>
+                        </div>
+                        <div class="tenant-stat">
+                            <span class="tenant-stat-value">${clientsCount}</span>
+                            <span class="tenant-stat-label">Clients</span>
+                        </div>
+                        <div class="tenant-stat">
+                            <span class="tenant-stat-value">RM ${totalEarnings.toFixed(0)}</span>
+                            <span class="tenant-stat-label">Earnings</span>
+                        </div>
+                    `}
                 </div>
                 <div class="tenant-card-footer">
                     <button class="btn btn-outline" onclick="copyTenantLink('${tenant.code}')" title="Copy tenant portal link" style="font-size:0.75rem;padding:0.35rem 0.7rem;">
@@ -641,6 +681,7 @@ function loadTenants() {
         `;
     }).join('');
 }
+
 
 // ==================== COPY TENANT PORTAL LINK ====================
 function copyTenantLink(tenantCode) {

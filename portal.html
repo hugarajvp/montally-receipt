@@ -1797,7 +1797,7 @@ TransitPay Team</textarea>
         })();
 
         // ==================== TENANT PORTAL LOGIN ====================
-        function handlePortalLogin(e) {
+        async function handlePortalLogin(e) {
             e.preventDefault();
             const loginBtn = document.getElementById('tenantLoginBtn');
             const errorMsg = document.getElementById('errorMsg');
@@ -1813,61 +1813,76 @@ TransitPay Team</textarea>
 
             loginBtn.classList.add('loading');
 
-            setTimeout(() => {
-                const registry = getRegistry();
-                const normalizedPhone = '+' + phone.replace(/^\+/, '');
-                const tenant = registry.tenants.find(t => t.code === tenantCode);
-                if (!tenant) {
-                    console.log('[DEBUG] FAIL: No tenant found with code:', tenantCode);
-                    loginBtn.classList.remove('loading');
-                    showPortalError('Invalid tenant code. Please check and try again.');
-                    return;
-                }
-                console.log('[DEBUG] Found tenant:', tenant.name, 'status:', tenant.status);
-                if (tenant.status !== 'Active') {
-                    loginBtn.classList.remove('loading');
-                    showPortalError('This tenant account is suspended. Contact administrator.');
-                    return;
-                }
-                const tenantPhone = '+' + tenant.phone.replace(/^\+/, '');
-                if (tenantPhone !== normalizedPhone) {
-                    console.log('[DEBUG] FAIL: Phone mismatch. Expected:', tenantPhone, 'Got:', normalizedPhone);
-                    loginBtn.classList.remove('loading');
-                    showPortalError('Phone number does not match this tenant account.');
-                    return;
-                }
+            // Wait for registry to sync from cloud
+            if (typeof waitForRegistrySync === 'function') {
+                await waitForRegistrySync(4000);
+            }
 
-                // Use tenants.js session system
-                const session = {
-                    type: 'tenant', tenantCode: tenantCode, tenantId: tenant.id,
-                    tenantName: tenant.name, phone: normalizedPhone, name: tenant.name,
-                    role: 'Tenant', loginTime: new Date().toISOString()
-                };
-                saveSession(session);
-                activateTenantScope(tenantCode);
+            const registry = getRegistry();
+            const normalizedPhone = '+' + phone.replace(/^\+/, '');
+            const tenant = registry.tenants.find(t => t.code === tenantCode);
 
-                appData.user = {
-                    phone: normalizedPhone, name: tenant.name, role: 'Tenant',
-                    tenantCode: tenantCode, loginTime: session.loginTime
-                };
-                saveAppData(appData);
-
+            if (!tenant) {
+                console.log('[DEBUG] FAIL: No tenant found with code:', tenantCode);
                 loginBtn.classList.remove('loading');
-                successMsg.querySelector('#successText').textContent = 'Welcome, ' + tenant.name + '! Loading...';
-                successMsg.classList.add('visible');
+                showPortalError('Invalid tenant code. Please check and try again.');
+                return false;
+            }
 
-                setTimeout(() => {
-                    // Hide portal login, show main app
-                    document.getElementById('portalLogin').classList.remove('active');
-                    showApp();
-                    showToast('Welcome, ' + tenant.name + '!', 'success');
-                }, 800);
-            }, 600);
+            if (tenant.status !== 'Active') {
+                loginBtn.classList.remove('loading');
+                showPortalError('This tenant account is suspended. Contact administrator.');
+                return false;
+            }
+
+            const tenantPhone = '+' + tenant.phone.replace(/^\+/, '');
+            if (tenantPhone !== normalizedPhone) {
+                console.log('[DEBUG] FAIL: Phone mismatch. Expected:', tenantPhone, 'Got:', normalizedPhone);
+                loginBtn.classList.remove('loading');
+                showPortalError('Phone number does not match this tenant account.');
+                return false;
+            }
+
+            // SUCCESS - Setup session
+            const session = {
+                type: 'tenant', tenantCode: tenantCode, tenantId: tenant.id,
+                tenantName: tenant.name, phone: normalizedPhone, name: tenant.name,
+                role: 'Tenant', loginTime: new Date().toISOString()
+            };
+            saveSession(session);
+            activateTenantScope(tenantCode);
+
+            // FETCH EXISTING DATA FROM CLOUD BEFORE FIRST SAVE
+            if (typeof getAppDataCloud === 'function') {
+                const cloudData = await getAppDataCloud();
+                if (cloudData) {
+                    appData = cloudData;
+                    console.log('[Portal] Restored appData from cloud for tenant:', tenantCode);
+                }
+            }
+
+            appData.user = {
+                phone: normalizedPhone, name: tenant.name, role: 'Tenant',
+                tenantCode: tenantCode, loginTime: session.loginTime
+            };
+            saveAppData(appData);
+
+            loginBtn.classList.remove('loading');
+            successMsg.querySelector('#successText').textContent = 'Welcome, ' + tenant.name + '! Loading...';
+            successMsg.classList.add('visible');
+
+            setTimeout(() => {
+                document.getElementById('portalLogin').classList.remove('active');
+                showApp();
+                showToast('Welcome, ' + tenant.name + '!', 'success');
+            }, 800);
+
             return false;
         }
 
+
         // ==================== HOST ADMIN PORTAL LOGIN ====================
-        function handleHostPortalLogin(e) {
+        async function handleHostPortalLogin(e) {
             e.preventDefault();
             const loginBtn = document.getElementById('hostLoginBtn');
             const errorMsg = document.getElementById('errorMsg');
@@ -1887,48 +1902,73 @@ TransitPay Team</textarea>
 
             loginBtn.classList.add('loading');
 
+            // Wait for Cloud Registry
+            if (typeof waitForRegistrySync === 'function') {
+                await waitForRegistrySync(4000);
+            }
+
+            const registry = getRegistry();
+            const normalizedPhone = '+' + phone.replace(/^\+/, '');
+
+            // VALIDATION: If a host already exists in the cloud registry, phone must match
+            if (registry.host && registry.host.phone) {
+                const existingPhone = '+' + registry.host.phone.replace(/^\+/, '');
+                if (existingPhone !== normalizedPhone) {
+                    loginBtn.classList.remove('loading');
+                    showPortalError('Host account already exists with a different phone number. Access denied.');
+                    return false;
+                }
+            }
+
+            // Update or Set Host Registry
+            registry.host = {
+                phone: normalizedPhone, name: name, username: username, hostname: hostname,
+                createdAt: (registry.host && registry.host.createdAt) ? registry.host.createdAt : new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            saveRegistry(registry);
+
+            localStorage.setItem('transitpay_host_credentials', JSON.stringify({
+                username: username, name: name, hostname: hostname, phone: normalizedPhone
+            }));
+
+            const session = {
+                type: 'host', tenantCode: 'HOST', phone: normalizedPhone,
+                name: name, username: username, hostname: hostname,
+                role: 'Host Admin', loginTime: new Date().toISOString()
+            };
+            saveSession(session);
+            activateTenantScope('HOST');
+
+            // FETCH HOST CLOUD DATA
+            if (typeof getAppDataCloud === 'function') {
+                const cloudData = await getAppDataCloud();
+                if (cloudData) {
+                    appData = cloudData;
+                    console.log('[Portal] Restored appData from cloud for Host');
+                }
+            }
+
+            appData.user = {
+                phone: normalizedPhone, name: name, username: username,
+                hostname: hostname, role: 'Host Admin', tenantCode: 'HOST',
+                loginTime: session.loginTime
+            };
+            saveAppData(appData);
+
+            loginBtn.classList.remove('loading');
+            successMsg.querySelector('#successText').textContent = 'Welcome, ' + name + '! Opening dashboard...';
+            successMsg.classList.add('visible');
+
             setTimeout(() => {
-                const registry = getRegistry();
-                const normalizedPhone = '+' + phone.replace(/^\+/, '');
+                document.getElementById('portalLogin').classList.remove('active');
+                showApp();
+                showToast('Welcome, ' + name + '!', 'success');
+            }, 800);
 
-                registry.host = {
-                    phone: normalizedPhone, name: name, username: username, hostname: hostname,
-                    createdAt: (registry.host && registry.host.createdAt) ? registry.host.createdAt : new Date().toISOString(),
-                    updatedAt: new Date().toISOString()
-                };
-                saveRegistry(registry);
-
-                localStorage.setItem('transitpay_host_credentials', JSON.stringify({
-                    username: username, name: name, hostname: hostname, phone: normalizedPhone
-                }));
-
-                const session = {
-                    type: 'host', tenantCode: 'HOST', phone: normalizedPhone,
-                    name: name, username: username, hostname: hostname,
-                    role: 'Host Admin', loginTime: new Date().toISOString()
-                };
-                saveSession(session);
-                activateTenantScope('HOST');
-
-                appData.user = {
-                    phone: normalizedPhone, name: name, username: username,
-                    hostname: hostname, role: 'Host Admin', tenantCode: 'HOST',
-                    loginTime: session.loginTime
-                };
-                saveAppData(appData);
-
-                loginBtn.classList.remove('loading');
-                successMsg.querySelector('#successText').textContent = 'Welcome, ' + name + '! Opening dashboard...';
-                successMsg.classList.add('visible');
-
-                setTimeout(() => {
-                    document.getElementById('portalLogin').classList.remove('active');
-                    showApp();
-                    showToast('Welcome, ' + name + '!', 'success');
-                }, 800);
-            }, 600);
             return false;
         }
+
     </script>
 
 </body>

@@ -18,6 +18,8 @@ const firebaseConfig = {
 // ==================== INIT FIREBASE ====================
 let db = null;
 let firebaseReady = false;
+let registrySynced = false;
+
 
 function initFirebase() {
     try {
@@ -69,12 +71,38 @@ async function fsGetRegistry() {
     if (!firebaseReady) return null;
     try {
         const snap = await getRegistryDocRef().get();
-        return snap.exists ? snap.data() : null;
+        if (snap.exists) {
+            registrySynced = true;
+            return snap.data();
+        }
+        return null;
     } catch (err) {
         console.error('[FS] getRegistry error:', err);
         return null;
     }
 }
+
+// Function to wait for registry sync
+async function waitForRegistrySync(timeoutMs = 5000) {
+    if (!firebaseReady) return false;
+    if (registrySynced) return true;
+
+    return new Promise((resolve) => {
+        const start = Date.now();
+        const check = setInterval(async () => {
+            if (registrySynced) {
+                clearInterval(check);
+                resolve(true);
+            } else if (Date.now() - start > timeoutMs) {
+                clearInterval(check);
+                // Try one last manual fetch
+                const reg = await fsGetRegistry();
+                resolve(!!reg);
+            }
+        }, 200);
+    });
+}
+
 
 async function fsSaveRegistry(registry) {
     if (!firebaseReady) return;

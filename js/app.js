@@ -266,7 +266,7 @@ function navigateTo(page) {
 
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
-    sidebar.classList.toggle('open');
+    sidebar.classList.toggle('active');
 
     // Add overlay
     let overlay = document.querySelector('.sidebar-overlay');
@@ -276,14 +276,16 @@ function toggleSidebar() {
         overlay.onclick = closeSidebar;
         document.body.appendChild(overlay);
     }
-    overlay.classList.toggle('active', sidebar.classList.contains('open'));
+    overlay.classList.toggle('active', sidebar.classList.contains('active'));
 }
 
+
 function closeSidebar() {
-    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar').classList.remove('active');
     const overlay = document.querySelector('.sidebar-overlay');
     if (overlay) overlay.classList.remove('active');
 }
+
 
 
 // ==================== UTILITIES ====================
