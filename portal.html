@@ -1817,15 +1817,19 @@ TransitPay Team</textarea>
 
             // Wait for registry to sync from cloud
             if (typeof waitForRegistrySync === 'function') {
-                await waitForRegistrySync(4000);
+                console.log('[Portal] Requesting registry sync...');
+                await waitForRegistrySync(6000);
             }
 
             const registry = getRegistry();
+            console.log('[Portal] Current Registry Tenants:', registry.tenants.map(t => t.code));
+
             const normalizedPhone = normalizePhone(phone);
             const tenant = registry.tenants.find(t => t.code === tenantCode);
 
             if (!tenant) {
                 console.log('[DEBUG] FAIL: No tenant found with code:', tenantCode);
+                console.log('[DEBUG] Available codes:', registry.tenants.map(t => t.code).join(', '));
                 loginBtn.classList.remove('loading');
                 showPortalError('Invalid tenant code. Please check and try again.');
                 return false;

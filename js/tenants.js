@@ -375,7 +375,7 @@ function updateTenantBadge() {
 }
 
 // ==================== TENANT CRUD ====================
-function saveTenant(e) {
+async function saveTenant(e) {
     e.preventDefault();
 
     const code = document.getElementById('tenantCode').value.toUpperCase().trim();
@@ -394,6 +394,11 @@ function saveTenant(e) {
     if (!/^[A-Z0-9\-]{3,12}$/.test(code)) {
         showToast('Tenant code must be 3-12 characters (letters, numbers, dashes).', 'error');
         return false;
+    }
+
+    // Force a fresh registry fetch from cloud before saving to avoid overwriting others' changes
+    if (window.firebaseReady && typeof getRegistryCloud === 'function') {
+        await getRegistryCloud();
     }
 
     const registry = getRegistry();
@@ -556,6 +561,11 @@ function deleteTenant(tenantId) {
 
 // ==================== TENANT LIST RENDERING ====================
 async function loadTenants() {
+    // If on tenants page, try to get fresh registry from cloud
+    if (window.firebaseReady && typeof getRegistryCloud === 'function') {
+        await getRegistryCloud();
+    }
+
     const registry = getRegistry();
     const grid = document.getElementById('tenantCardsGrid');
     const countEl = document.getElementById('totalTenantsCount');

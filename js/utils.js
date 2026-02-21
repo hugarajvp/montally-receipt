@@ -29,26 +29,29 @@ function normalizePhone(phone) {
  * Used during login to ensure the latest tenant list is available
  */
 async function waitForRegistrySync(timeoutMs = 5000) {
-    // Fallback if firebase-db.js didn't load or failed
-    if (typeof window.firebaseReady !== 'undefined' && !window.firebaseReady && !localStorage.getItem('transitpay_registry')) {
-        return false;
+    console.log('[TransitPay] Waiting for registry sync...');
+
+    // If firebase is ready, always try a fresh fetch first
+    if (window.firebaseReady && typeof getRegistryCloud === 'function') {
+        try {
+            await getRegistryCloud();
+            console.log('[TransitPay] Registry synced from cloud ✅');
+            return true;
+        } catch (err) {
+            console.warn('[TransitPay] Cloud sync failed, falling back:', err);
+        }
     }
 
+    // Fallback/Wait logic
     return new Promise((resolve) => {
         const start = Date.now();
         const check = setInterval(async () => {
-            if (window.registrySynced) {
+            // Already synced or reached timeout
+            if (window.registrySynced || (Date.now() - start > timeoutMs)) {
                 clearInterval(check);
-                resolve(true);
-            } else if (Date.now() - start > timeoutMs) {
-                clearInterval(check);
-                // Try one last manual fetch via the cloud wrapper
-                if (typeof getRegistryCloud === 'function') {
-                    const reg = await getRegistryCloud();
-                    resolve(!!reg);
-                } else {
-                    resolve(false);
-                }
+                const currentReg = localStorage.getItem('transitpay_registry');
+                console.log('[TransitPay] Sync check complete. Registry exists:', !!currentReg);
+                resolve(!!currentReg);
             }
         }, 200);
     });
