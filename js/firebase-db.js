@@ -28,8 +28,12 @@ function initFirebase() {
         }
         db = firebase.firestore();
 
-        // Enable long polling to bypass potential proxy/firewall issues
-        db.settings({ experimentalForceLongPolling: true });
+        // Enable long polling and disable fetch streams to bypass potential proxy/firewall issues
+        // This is the most resilient combination for restricted networks.
+        db.settings({
+            experimentalForceLongPolling: true,
+            useFetchStreams: false
+        });
 
         // Try anonymous login to satisfy "authenticated only" security rules
         if (firebase.auth) {
@@ -39,16 +43,23 @@ function initFirebase() {
         }
 
         // Enable offline persistence
-        db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
-            if (err.code == 'failed-precondition') {
-                console.warn('[TransitPay] Persistence failed: Multiple tabs open');
-            } else if (err.code == 'unimplemented') {
-                console.warn('[TransitPay] Persistence failed: Browser not supported');
-            }
-        });
+        db.enablePersistence({ synchronizeTabs: true })
+            .then(() => console.log('[TransitPay] Persistence enabled ✅'))
+            .catch((err) => {
+                if (err.code == 'failed-precondition') {
+                    console.warn('[TransitPay] Persistence failed: Multiple tabs open');
+                } else if (err.code == 'unimplemented') {
+                    console.warn('[TransitPay] Persistence failed: Browser not supported');
+                }
+            });
+
+        // Explicitly force network online
+        if (typeof db.enableNetwork === 'function') {
+            db.enableNetwork().catch(() => { });
+        }
 
         window.firebaseReady = true;
-        console.log('[TransitPay] Firebase connected with resilience ✅');
+        console.log('[TransitPay] Firebase initialized with High Resilience mode ✅');
     } catch (err) {
         console.warn('[TransitPay] Firebase init failed, using localStorage fallback:', err);
         window.firebaseReady = false;
@@ -103,19 +114,21 @@ async function fsGetRegistry() {
         const snap = await getRegistryDocRef().get();
         if (snap.exists) {
             window.registrySynced = true;
+            window.registrySyncedCloud = true; // NEW: track actual cloud sync
             return snap.data();
         }
         return null;
     } catch (err) {
         console.error('[FS] getRegistry error:', err.message);
 
-        // If it says "offline", try to force network enablement
+        // If it says "offline", try to force network enablement immediately
         if (err.message && err.message.toLowerCase().includes('offline')) {
             console.warn('[FS] Client appears offline to Firestore. Attempting to force network...');
             if (db && typeof db.enableNetwork === 'function') {
                 db.enableNetwork().catch(() => { });
             }
         }
+        window.registrySyncedCloud = false;
         return null;
     }
 }
@@ -138,10 +151,14 @@ async function fsGetAppData(tenantCode) {
     if (!window.firebaseReady) return null;
     try {
         const snap = await getTenantDocRef(tenantCode).get();
-        return snap.exists ? snap.data() : null;
+        if (snap.exists) {
+            return snap.data();
+        }
+        return null;
     } catch (err) {
-        console.error('[FS] getAppData error:', err.message);
+        console.error(`[FS] getAppData error for ${tenantCode}:`, err.message);
         if (err.message && err.message.toLowerCase().includes('offline')) {
+            console.warn('[FS] Client appears offline. Re-requesting network...');
             if (db && typeof db.enableNetwork === 'function') {
                 db.enableNetwork().catch(() => { });
             }

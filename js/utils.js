@@ -32,6 +32,9 @@ async function waitForRegistrySync(timeoutMs = 8000, requiredTenantCode = null) 
     console.log('[TransitPay] Waiting for registry sync...');
     const start = Date.now();
 
+    // Reset cloud sync flag for this wait session
+    window.registrySyncedCloud = false;
+
     // 1. Wait for Firebase to be ready
     while (!window.firebaseReady && (Date.now() - start < 4000)) {
         await new Promise(r => setTimeout(r, 200));
@@ -41,61 +44,81 @@ async function waitForRegistrySync(timeoutMs = 8000, requiredTenantCode = null) 
     if (window.firebaseReady && typeof getRegistryCloud === 'function') {
         try {
             console.log('[TransitPay] Attempting cloud registry fetch...');
-            const cloudReg = await getRegistryCloud();
-            if (cloudReg) {
-                // If a specific tenant is required, check for it
-                if (requiredTenantCode) {
-                    const hasTenant = cloudReg.tenants && cloudReg.tenants.some(t => t.code.toUpperCase() === requiredTenantCode.toUpperCase());
-                    if (hasTenant) {
-                        console.log(`[TransitPay] Registry synced from cloud with tenant ${requiredTenantCode} ✅`);
+            await getRegistryCloud(); // This updates window.registrySyncedCloud inside fsGetRegistry
+
+            if (window.registrySyncedCloud) {
+                const cloudRegRaw = localStorage.getItem('transitpay_registry');
+                if (cloudRegRaw) {
+                    const cloudReg = JSON.parse(cloudRegRaw);
+                    // If a specific tenant is required, check for it
+                    if (requiredTenantCode) {
+                        const hasTenant = cloudReg.tenants && cloudReg.tenants.some(t => t.code.toUpperCase() === requiredTenantCode.toUpperCase());
+                        if (hasTenant) {
+                            console.log(`[TransitPay] Primary sync: Tenant ${requiredTenantCode} found in cloud registry ✅`);
+                            return true;
+                        }
+                    } else {
+                        console.log('[TransitPay] Primary sync: Registry received from cloud ✅');
                         return true;
                     }
-                    // If not found yet, we continue to the polling loop
-                } else {
-                    console.log('[TransitPay] Registry synced from cloud ✅');
-                    return true;
                 }
             }
         } catch (err) {
-            console.warn('[TransitPay] Cloud sync failed, falling back:', err);
+            console.warn('[TransitPay] Primary cloud sync failed, will retry in background:', err);
         }
     }
 
-    // 3. Polling loop
+    // 3. Polling loop / Retries
     return new Promise((resolve) => {
         let fetchRunning = false;
         const check = setInterval(async () => {
             const currentRegRaw = localStorage.getItem('transitpay_registry');
-            let hasRequired = !requiredTenantCode;
+            let hasRequiredInCache = !requiredTenantCode;
 
             if (currentRegRaw && requiredTenantCode) {
                 try {
                     const reg = JSON.parse(currentRegRaw);
-                    hasRequired = reg.tenants && reg.tenants.some(t => {
+                    hasRequiredInCache = reg.tenants && reg.tenants.some(t => {
                         const code = (t.code || '').toUpperCase();
                         return code === requiredTenantCode.toUpperCase();
                     });
                 } catch (e) { }
             }
 
-            // If we don't have what we need yet, and firebase is ready, and we aren't already fetching... retry!
-            if (!hasRequired && window.firebaseReady && !fetchRunning && (Date.now() - start < timeoutMs - 1000)) {
-                fetchRunning = true;
-                console.log('[TransitPay] Retrying cloud registry sync...');
-                getRegistryCloud().then(res => {
-                    fetchRunning = false;
-                    if (res) console.log('[TransitPay] Late sync success ✅');
-                }).catch(() => {
-                    fetchRunning = false;
-                });
+            // SUCCESS CONDITIONS
+            // We succeed if:
+            // a) We just got a FRESH cloud sync with the target
+            // b) We ALREADY had the target in cache (from previous session)
+            if (window.registrySyncedCloud || hasRequiredInCache) {
+                clearInterval(check);
+                const source = window.registrySyncedCloud ? 'CLOUD' : 'CACHE';
+                console.log(`[TransitPay] Sync complete (via ${source}). Found ${requiredTenantCode || 'registry'}: true ✅`);
+                resolve(true);
+                return;
             }
 
-            // Already synced or reached timeout
-            if (window.registrySynced || hasRequired || (Date.now() - start > timeoutMs)) {
-                clearInterval(check);
-                console.log(`[TransitPay] Sync check complete. Has target ${requiredTenantCode}: ${hasRequired}`);
-                resolve(!!currentRegRaw);
+            // RETRY LOGIC: If we don't have it yet, and firebase is ready, retry the fetch
+            if (window.firebaseReady && !fetchRunning && (Date.now() - start < timeoutMs - 1000)) {
+                fetchRunning = true;
+                console.log('[TransitPay] Target not in cache. Retrying cloud fetch...');
+                if (typeof getRegistryCloud === 'function') {
+                    getRegistryCloud().then(() => {
+                        fetchRunning = false;
+                        if (window.registrySyncedCloud) console.log('[TransitPay] Late cloud sync success ✅');
+                    }).catch(() => {
+                        fetchRunning = false;
+                    });
+                } else {
+                    fetchRunning = false;
+                }
             }
-        }, 1000); // Poll every 1s instead of 300ms since we might be doing network calls
+
+            // TIMEOUT CONDITION
+            if (Date.now() - start > timeoutMs) {
+                clearInterval(check);
+                console.warn(`[TransitPay] Sync timeout after ${timeoutMs}ms. Required ${requiredTenantCode}: false`);
+                resolve(!!currentRegRaw); // Resolve with whatever we have in cache
+            }
+        }, 1000);
     });
 }
