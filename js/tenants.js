@@ -183,10 +183,39 @@ async function handleTenantLogin(tenantCode, phone) {
         return false;
     }
 
-    // Validate phone
+    // Validate phone: Check primary phone OR check sub-users
     const tenantPhone = normalizePhone(tenant.phone);
-    if (tenantPhone !== normalizedPhone) {
-        showToast('Phone number does not match this tenant account.', 'error');
+    let loginAsRole = 'Tenant';
+    let sessionName = tenant.name;
+    let phoneMatch = (tenantPhone === normalizedPhone);
+
+    if (!phoneMatch) {
+        console.log('[TenantLogin] Primary phone mismatch, checking sub-users...');
+
+        // Temporarily activate scope to check cloud data
+        activateTenantScope(code);
+
+        if (typeof getAppDataCloud === 'function') {
+            const cloudData = await getAppDataCloud();
+            if (cloudData && cloudData.users) {
+                const foundUser = cloudData.users.find(u => normalizePhone(u.phone) === normalizedPhone);
+                if (foundUser) {
+                    if (foundUser.status === 'Suspended') {
+                        showToast('Your user account is suspended. Contact your administrator.', 'error');
+                        return false;
+                    }
+                    phoneMatch = true;
+                    loginAsRole = foundUser.role;
+                    sessionName = foundUser.name;
+                    appData = cloudData;
+                    console.log('[TenantLogin] Sub-user verified:', foundUser.name);
+                }
+            }
+        }
+    }
+
+    if (!phoneMatch) {
+        showToast('Phone number does not match any account for this tenant.', 'error');
         return false;
     }
 
@@ -197,30 +226,29 @@ async function handleTenantLogin(tenantCode, phone) {
         tenantId: tenant.id,
         tenantName: tenant.name,
         phone: normalizedPhone,
-        name: tenant.name,
-        role: 'Tenant',
+        name: sessionName,
+        role: loginAsRole,
         loginTime: new Date().toISOString()
     };
     saveSession(session);
 
-    // Set app data scope to this tenant
+    // Ensure scope is active and data is loaded
     activateTenantScope(code);
 
-    // FETCH FROM CLOUD BEFORE FIRST SAVE
-    if (typeof getAppDataCloud === 'function') {
+    if (!appData.users && typeof getAppDataCloud === 'function') {
         const cloudData = await getAppDataCloud();
         if (cloudData) appData = cloudData;
     }
 
     // Ensure tenant data structure exists
     if (!appData.user) {
-        appData = getAppData(); // Re-init fresh data for new tenant
+        appData = getAppData();
     }
 
     appData.user = {
         phone: normalizedPhone,
-        name: tenant.name,
-        role: 'Tenant',
+        name: sessionName,
+        role: loginAsRole,
         tenantCode: code,
         loginTime: session.loginTime
     };
