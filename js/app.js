@@ -96,8 +96,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Session is stored in sessionStorage so it clears when the browser tab is closed,
     // requiring the user to log in again via the portal page.
     const savedSession = JSON.parse(sessionStorage.getItem('transitpay_session') || 'null');
-    if (savedSession && appData.user) {
-        // Restore session — only if both a session token AND user data are present
+    if (savedSession) {
+        // Restore session — ensure we switch to the correct tenant scope first
         currentSession = savedSession;
         activateTenantScope(savedSession.tenantCode);
         showApp();

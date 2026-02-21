@@ -1772,8 +1772,13 @@ TransitPay Team</textarea>
         }
 
         // ==================== PORTAL INIT ====================
-        (function portalInit() {
+        (async function portalInit() {
             ensureDemoTenant();
+
+            // Sync registry from cloud if available
+            if (typeof getRegistryCloud === 'function') {
+                await getRegistryCloud();
+            }
 
             const urlParams = new URLSearchParams(window.location.search);
             const codeFromUrl = urlParams.get('code');
@@ -1810,22 +1815,26 @@ TransitPay Team</textarea>
 
             setTimeout(() => {
                 const registry = getRegistry();
-                console.log('[DEBUG] Registry:', JSON.stringify(registry, null, 2));
-                console.log('[DEBUG] Looking for tenant code:', tenantCode);
-                console.log('[DEBUG] Available tenant codes:', registry.tenants.map(t => t.code));
                 const normalizedPhone = '+' + phone.replace(/^\+/, '');
-                console.log('[DEBUG] Normalized phone:', normalizedPhone);
                 const tenant = registry.tenants.find(t => t.code === tenantCode);
                 if (!tenant) {
                     console.log('[DEBUG] FAIL: No tenant found with code:', tenantCode);
-                    loginBtn.classList.remove('loading'); showPortalError('Invalid tenant code. Available codes: ' + registry.tenants.map(t => t.code).join(', ')); return;
+                    loginBtn.classList.remove('loading');
+                    showPortalError('Invalid tenant code. Please check and try again.');
+                    return;
                 }
-                console.log('[DEBUG] Found tenant:', tenant.name, 'phone:', tenant.phone);
-                if (tenant.status !== 'Active') { loginBtn.classList.remove('loading'); showPortalError('Account suspended.'); return; }
+                console.log('[DEBUG] Found tenant:', tenant.name, 'status:', tenant.status);
+                if (tenant.status !== 'Active') {
+                    loginBtn.classList.remove('loading');
+                    showPortalError('This tenant account is suspended. Contact administrator.');
+                    return;
+                }
                 const tenantPhone = '+' + tenant.phone.replace(/^\+/, '');
                 if (tenantPhone !== normalizedPhone) {
                     console.log('[DEBUG] FAIL: Phone mismatch. Expected:', tenantPhone, 'Got:', normalizedPhone);
-                    loginBtn.classList.remove('loading'); showPortalError('Phone does not match. Expected: ' + tenantPhone); return;
+                    loginBtn.classList.remove('loading');
+                    showPortalError('Phone number does not match this tenant account.');
+                    return;
                 }
 
                 // Use tenants.js session system

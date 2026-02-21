@@ -113,9 +113,9 @@ async function fsSaveAppData(tenantCode, data) {
 async function migrateLocalStorageToFirestore(tenantCode) {
     if (!firebaseReady) return;
     const code = sanitizeTenantCode(tenantCode);
-    const localKey = 'transitpay_data_' + code;
-    const localRaw = localStorage.getItem(localKey) || localStorage.getItem('transitpay_data');
-    if (!localRaw) return;
+    const localKey = getTenantStorageKey(code);
+    const localRaw = localStorage.getItem(localKey);
+    if (!localRaw) return; // No local data to migrate for this tenant
 
     try {
         const existing = await fsGetAppData(code);

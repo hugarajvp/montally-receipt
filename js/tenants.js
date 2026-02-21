@@ -57,6 +57,9 @@ function getRegistry() {
 
 function saveRegistry(registry) {
     localStorage.setItem(REGISTRY_KEY, JSON.stringify(registry));
+    if (typeof saveRegistryCloud === 'function') {
+        saveRegistryCloud(registry);
+    }
 }
 
 function saveSession(session) {
@@ -72,7 +75,9 @@ function saveSession(session) {
 // Each tenant's data is stored under a unique key: transitpay_<CODE>
 function getTenantStorageKey(tenantCode) {
     if (!tenantCode || tenantCode === 'HOST') return 'transitpay_data';
-    return 'transitpay_' + tenantCode.replace(/[^A-Z0-9]/g, '');
+    // Use consistent sanitization: uppercase and allow only letters/numbers/dashes/underscores
+    const sanitized = tenantCode.toUpperCase().replace(/[^A-Z0-9_-]/g, '_');
+    return 'transitpay_' + sanitized;
 }
 
 // Override the global STORAGE_KEY based on who is logged in
