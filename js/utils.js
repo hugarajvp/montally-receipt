@@ -28,45 +28,56 @@ function normalizePhone(phone) {
  * Waits for the Firebase registry to be synced to localStorage
  * Used during login to ensure the latest tenant list is available
  */
-async function waitForRegistrySync(timeoutMs = 8000) {
+async function waitForRegistrySync(timeoutMs = 8000, requiredTenantCode = null) {
     console.log('[TransitPay] Waiting for registry sync...');
     const start = Date.now();
 
-    // 1. Wait for Firebase to be ready first (if it's intended to load)
+    // 1. Wait for Firebase to be ready
     while (!window.firebaseReady && (Date.now() - start < 4000)) {
         await new Promise(r => setTimeout(r, 200));
     }
 
-    // 2. If firebase is ready, always try a fresh fetch first
+    // 2. Try fresh fetch
     if (window.firebaseReady && typeof getRegistryCloud === 'function') {
         try {
             console.log('[TransitPay] Attempting cloud registry fetch...');
             const cloudReg = await getRegistryCloud();
             if (cloudReg) {
-                console.log('[TransitPay] Registry synced from cloud ✅');
-                return true;
+                // If a specific tenant is required, check for it
+                if (requiredTenantCode) {
+                    const hasTenant = cloudReg.tenants && cloudReg.tenants.some(t => t.code.toUpperCase() === requiredTenantCode.toUpperCase());
+                    if (hasTenant) {
+                        console.log(`[TransitPay] Registry synced from cloud with tenant ${requiredTenantCode} ✅`);
+                        return true;
+                    }
+                    // If not found yet, we continue to the polling loop
+                } else {
+                    console.log('[TransitPay] Registry synced from cloud ✅');
+                    return true;
+                }
             }
         } catch (err) {
             console.warn('[TransitPay] Cloud sync failed, falling back:', err);
         }
     }
 
-    // 3. Fallback/Wait logic for real-time sync listener (if any)
+    // 3. Polling loop
     return new Promise((resolve) => {
         const check = setInterval(async () => {
             const currentRegRaw = localStorage.getItem('transitpay_registry');
-            let hasMaya = false;
-            if (currentRegRaw) {
+            let hasRequired = !requiredTenantCode;
+
+            if (currentRegRaw && requiredTenantCode) {
                 try {
                     const reg = JSON.parse(currentRegRaw);
-                    hasMaya = reg.tenants && reg.tenants.some(t => t.code === 'MAYA');
+                    hasRequired = reg.tenants && reg.tenants.some(t => t.code.toUpperCase() === requiredTenantCode.toUpperCase());
                 } catch (e) { }
             }
 
             // Already synced or reached timeout
-            if (window.registrySynced || hasMaya || (Date.now() - start > timeoutMs)) {
+            if (window.registrySynced || hasRequired || (Date.now() - start > timeoutMs)) {
                 clearInterval(check);
-                console.log('[TransitPay] Sync check complete. Registry has Maya:', hasMaya);
+                console.log(`[TransitPay] Sync check complete. Has target ${requiredTenantCode}: ${hasRequired}`);
                 resolve(!!currentRegRaw);
             }
         }, 300);

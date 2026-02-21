@@ -166,8 +166,8 @@ async function handlePortalLogin(e) {
     try {
         // Wait for registry to sync from cloud
         if (typeof waitForRegistrySync === 'function') {
-            console.log('[Portal] Requesting registry sync...');
-            await waitForRegistrySync(8000);
+            console.log(`[Portal] Requesting registry sync for ${tenantCode}...`);
+            await waitForRegistrySync(8000, tenantCode);
         }
 
         const registry = getRegistry();
@@ -303,7 +303,7 @@ async function handleHostPortalLogin(e) {
 
     try {
         if (typeof waitForRegistrySync === 'function') {
-            await waitForRegistrySync(4000);
+            await waitForRegistrySync(8000); // Increased timeout to match tenant login
         }
 
         const registry = getRegistry();
@@ -311,7 +311,11 @@ async function handleHostPortalLogin(e) {
 
         if (registry.host && registry.host.phone) {
             const existingPhone = normalizePhone(registry.host.phone);
-            if (existingPhone !== normalizedPhone) {
+            const DEFAULT_PHONE = normalizePhone('+60123456789');
+            const OLD_DEFAULT = normalizePhone('+60198765432');
+
+            // If it's the default placeholder host, allow the user to take it over correctly
+            if (existingPhone !== normalizedPhone && existingPhone !== DEFAULT_PHONE && existingPhone !== OLD_DEFAULT) {
                 if (loginBtn) loginBtn.classList.remove('loading');
                 showPortalError('Host account already exists with a different phone number. Access denied.');
                 return false;

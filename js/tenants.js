@@ -116,7 +116,10 @@ async function handleHostLogin(phone) {
     if (registry.host) {
         // Host exists — validate phone
         const hostPhone = normalizePhone(registry.host.phone);
-        if (hostPhone !== normalizedPhone) {
+        const DEFAULT_PHONE = normalizePhone('+60123456789');
+        const OLD_DEFAULT = normalizePhone('+60198765432');
+
+        if (hostPhone !== normalizedPhone && hostPhone !== DEFAULT_PHONE && hostPhone !== OLD_DEFAULT) {
             showToast('Host phone number does not match.', 'error');
             return false;
         }
