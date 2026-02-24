@@ -6,6 +6,92 @@
 // ==================== DATA IMPORT ====================
 let importedData = null;
 
+// ==================== DATA CLEANUP ====================
+// Fix misplaced petrol data that was accidentally saved as receipts
+function fixMisplacedPetrolData() {
+    if (!appData || !appData.receipts) return 0;
+
+    const misplaced = [];
+    const keep = [];
+
+    appData.receipts.forEach(r => {
+        // Detect misplaced petrol records:
+        // - imported flag is true
+        // - clientName is empty (petrol CSV doesn't have clientName)
+        // - OR items[0].description contains petrol-like data
+        const isEmpty = !r.clientName || r.clientName.trim() === '';
+        const isImported = r.imported === true;
+        const looksLikePetrol = r.items && r.items[0] && (
+            r.items[0].description === 'Monthly transport - ' ||
+            r.items[0].description === 'Trip: ' ||
+            r.items[0].description === 'Monthly transport - undefined' ||
+            r.items[0].description === 'Trip: undefined'
+        );
+
+        if (isImported && (isEmpty || looksLikePetrol)) {
+            misplaced.push(r);
+        } else {
+            keep.push(r);
+        }
+    });
+
+    if (misplaced.length === 0) return 0;
+
+    console.log('[DataFix] Found', misplaced.length, 'misplaced petrol records in receipts. Moving to petrolExpenses...');
+
+    // Move misplaced records to petrolExpenses
+    if (!appData.petrolExpenses) appData.petrolExpenses = [];
+
+    misplaced.forEach(r => {
+        const expense = {
+            id: 'PTR-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+            date: r.date,
+            amount: r.total || 0,
+            liters: 0,
+            carPlate: '',
+            notes: r.notes || 'Migrated from receipts',
+            receipt: null,
+            createdAt: r.createdAt || new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            imported: true
+        };
+        appData.petrolExpenses.push(expense);
+    });
+
+    // Remove misplaced records from receipts
+    appData.receipts = keep;
+
+    // Save the corrected data
+    saveAppData(appData);
+
+    console.log('[DataFix] Moved', misplaced.length, 'records to petrolExpenses ✅');
+    console.log('[DataFix] Receipts remaining:', keep.length);
+    console.log('[DataFix] Petrol expenses now:', appData.petrolExpenses.length);
+
+    // Refresh UI
+    if (typeof updateDashboard === 'function') updateDashboard();
+    if (typeof loadReceipts === 'function') loadReceipts();
+    if (typeof loadPetrolExpenses === 'function') loadPetrolExpenses();
+    if (typeof updatePetrolDashboard === 'function') updatePetrolDashboard();
+
+    if (typeof showToast === 'function') {
+        showToast(`Fixed: Moved ${misplaced.length} petrol records from Receipts to Petrol section`, 'success');
+    }
+
+    return misplaced.length;
+}
+
+// Auto-run cleanup when page loads (after a small delay to ensure appData is ready)
+setTimeout(() => {
+    if (typeof appData !== 'undefined' && appData) {
+        const fixed = fixMisplacedPetrolData();
+        if (fixed > 0) {
+            console.log('[DataFix] Auto-cleanup completed: fixed', fixed, 'misplaced records');
+        }
+    }
+}, 3000);
+
+
 function downloadSampleCSV() {
     const type = document.getElementById('importType').value;
     let csv;
