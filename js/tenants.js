@@ -397,7 +397,7 @@ function isTenant() {
 // ==================== UI VISIBILITY ====================
 function updateMenuVisibility() {
     const hostOnlyItems = document.querySelectorAll('.host-only-menu');
-    const tenantHiddenItems = document.querySelectorAll('#menuUsers, #menuDataImport');
+    const tenantHiddenItems = document.querySelectorAll('#menuUsers');
 
     if (isHost()) {
         // Show all menus including tenant management
