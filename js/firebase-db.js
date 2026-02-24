@@ -400,10 +400,42 @@ window.getRegistryCloud = async function () {
 };
 
 window.saveRegistryCloud = async function (registry) {
-    localStorage.setItem('transitpay_registry', JSON.stringify(registry));
+    // CRITICAL: Before saving to cloud, fetch the cloud version and MERGE tenants.
+    // This prevents a new PC (which only has DEMO locally) from overwriting
+    // the cloud registry that has all the real tenants (MAYA, etc.)
     if (window.firebaseReady) {
+        try {
+            const cloudReg = await fsGetRegistry();
+            if (cloudReg && cloudReg.tenants && cloudReg.tenants.length > 0) {
+                // Merge: keep all cloud tenants, add/update local ones
+                const mergedTenants = [...cloudReg.tenants];
+                const localTenants = registry.tenants || [];
+
+                for (const localTenant of localTenants) {
+                    const existingIdx = mergedTenants.findIndex(t =>
+                        t.id === localTenant.id || t.code === localTenant.code
+                    );
+                    if (existingIdx >= 0) {
+                        // Update existing tenant with local changes
+                        mergedTenants[existingIdx] = localTenant;
+                    } else {
+                        // Add new tenant from local
+                        mergedTenants.push(localTenant);
+                    }
+                }
+
+                registry.tenants = mergedTenants;
+                console.log('[TransitPay] Registry merged with cloud ✅ (' + mergedTenants.length + ' tenants)');
+            }
+        } catch (mergeErr) {
+            console.warn('[TransitPay] Could not merge with cloud registry:', mergeErr.message);
+        }
+
         await fsSaveRegistry(registry);
     }
+
+    // Save merged result to localStorage
+    localStorage.setItem('transitpay_registry', JSON.stringify(registry));
 };
 
 console.log('[TransitPay] firebase-db.js loaded ✅');
