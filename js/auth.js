@@ -278,11 +278,12 @@ async function handlePortalLogin(e) {
             loginTime: new Date().toISOString()
         };
         saveSession(session);
-        activateTenantScope(tenantCode);
 
-        if (!appData.users && typeof getAppDataCloud === 'function') {
-            const cloudData = await getAppDataCloud();
-            if (cloudData) appData = cloudData;
+        // Load cloud data for this tenant (ensures all receipts, clients appear on any device)
+        if (typeof activateTenantScopeCloud === 'function') {
+            await activateTenantScopeCloud(tenantCode);
+        } else {
+            activateTenantScope(tenantCode);
         }
 
         appData.user = {
@@ -417,11 +418,12 @@ async function handleHostPortalLogin(e) {
             loginTime: new Date().toISOString()
         };
         saveSession(session);
-        activateTenantScope('HOST');
 
-        if (typeof getAppDataCloud === 'function') {
-            const cloudData = await getAppDataCloud();
-            if (cloudData) appData = cloudData;
+        // Load cloud data for HOST (ensures all data appears on any device)
+        if (typeof activateTenantScopeCloud === 'function') {
+            await activateTenantScopeCloud('HOST');
+        } else {
+            activateTenantScope('HOST');
         }
 
         appData.user = {

@@ -86,8 +86,45 @@ function activateTenantScope(tenantCode) {
     // Update the global STORAGE_KEY used by app.js
     window._ACTIVE_STORAGE_KEY = key;
     window._ACTIVE_TENANT_CODE = tenantCode || 'HOST';
-    // Reload app data from the correct scope
+    // Reload app data from the correct scope (localStorage first for instant display)
     appData = getAppData();
+}
+
+// Async version: loads from cloud and updates appData + UI
+async function activateTenantScopeCloud(tenantCode) {
+    activateTenantScope(tenantCode); // Set scope + load local first
+
+    // Then try to load from cloud (this gets the REAL data on any device)
+    if (typeof getAppDataCloud === 'function') {
+        try {
+            const cloudData = await getAppDataCloud();
+            if (cloudData) {
+                // Preserve user session from local
+                const currentUser = appData ? appData.user : null;
+                appData = cloudData;
+                if (currentUser) appData.user = currentUser;
+
+                // Ensure all required arrays exist
+                if (!appData.receipts) appData.receipts = [];
+                if (!appData.clients) appData.clients = [];
+                if (!appData.users) appData.users = [];
+                if (!appData.petrolExpenses) appData.petrolExpenses = [];
+                if (!appData.emailHistory) appData.emailHistory = [];
+
+                // Update localStorage cache with cloud data
+                const key = getTenantStorageKey(tenantCode);
+                localStorage.setItem(key, JSON.stringify(appData));
+
+                console.log('[Tenants] Cloud data loaded for', tenantCode, '✅',
+                    '(receipts:', appData.receipts.length,
+                    ', clients:', appData.clients.length, ')');
+                return true;
+            }
+        } catch (err) {
+            console.warn('[Tenants] Cloud data load failed for', tenantCode, ':', err.message);
+        }
+    }
+    return false;
 }
 
 // ==================== LOGIN MODE SWITCHER ====================

@@ -204,17 +204,41 @@ function showApp() {
     // Update menu visibility based on role
     updateMenuVisibility();
 
-    // Start Firestore real-time sync & migrate old data
+    // CRITICAL: Fetch cloud data FIRST, then render dashboard
     const tenantCode = window._ACTIVE_TENANT_CODE || 'HOST';
-    if (typeof migrateLocalStorageToFirestore === 'function') {
-        migrateLocalStorageToFirestore(tenantCode).then(() => {
-            if (typeof startRealtimeSync === 'function') startRealtimeSync(tenantCode);
-        });
-    } else if (typeof startRealtimeSync === 'function') {
-        startRealtimeSync(tenantCode);
-    }
 
-    // Load dashboard
+    // Load cloud data, then refresh all UI
+    const loadAndRender = async () => {
+        // Try loading cloud data
+        if (typeof activateTenantScopeCloud === 'function') {
+            const cloudLoaded = await activateTenantScopeCloud(tenantCode);
+            if (cloudLoaded) {
+                console.log('[App] Cloud data loaded, refreshing UI...');
+            }
+        }
+
+        // Migrate old localStorage data to Firestore
+        if (typeof migrateLocalStorageToFirestore === 'function') {
+            await migrateLocalStorageToFirestore(tenantCode);
+        }
+
+        // Start real-time listener for live updates
+        if (typeof startRealtimeSync === 'function') {
+            startRealtimeSync(tenantCode);
+        }
+
+        // Refresh ALL dashboard sections with cloud data
+        updateDashboard();
+        loadReceipts();
+        loadTrips();
+        loadClients();
+        loadUsers();
+        loadPetrolExpenses();
+        populateClientDropdown();
+        populateLocationDropdowns();
+    };
+
+    // Render immediately with local data first (fast)
     updateDashboard();
     loadReceipts();
     loadTrips();
@@ -223,6 +247,11 @@ function showApp() {
     loadPetrolExpenses();
     populateClientDropdown();
     populateLocationDropdowns();
+
+    // Then fetch cloud data and re-render (accurate)
+    loadAndRender().catch(err => {
+        console.warn('[App] Cloud data load failed:', err.message);
+    });
 }
 
 // ==================== NAVIGATION ====================
