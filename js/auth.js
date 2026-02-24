@@ -7,6 +7,8 @@ const PORTAL_REGISTRY_KEY = 'transitpay_registry';
 
 /**
  * Ensures a DEMO tenant exists in the registry for testing/first-run.
+ * IMPORTANT: Only seeds default data when NO registry exists at all (local or cloud).
+ * This prevents overwriting cloud-synced data on new devices.
  */
 function ensureDemoTenant() {
     const data = localStorage.getItem(PORTAL_REGISTRY_KEY);
@@ -20,10 +22,22 @@ function ensureDemoTenant() {
         }
     }
 
+    // If we already have a registry with a real host (not default), don't touch it
+    // This prevents overwriting cloud-synced host data on new PCs
+    const DEFAULT_PHONE = '+60123456789';
+    const OLD_PHONE = '+60198765432';
+    if (registry && registry.host && registry.host.phone
+        && registry.host.phone !== DEFAULT_PHONE
+        && registry.host.phone !== OLD_PHONE) {
+        console.log('[Portal] Registry exists with real host data, skipping seed.');
+        if (!registry.tenants) registry.tenants = [];
+        return registry;
+    }
+
     if (!registry) {
         registry = {
             host: {
-                phone: '+60123456789',
+                phone: DEFAULT_PHONE,
                 name: 'System Admin',
                 createdAt: new Date().toISOString()
             },
@@ -35,10 +49,8 @@ function ensureDemoTenant() {
     if (!registry.tenants) registry.tenants = [];
 
     // Migrate old default phone number if still present
-    const OLD_PHONE = '+60198765432';
-    const NEW_PHONE = '+60123456789';
     if (registry.host && registry.host.phone === OLD_PHONE) {
-        registry.host.phone = NEW_PHONE;
+        registry.host.phone = DEFAULT_PHONE;
         registry.host.name = 'System Admin';
     }
 
@@ -48,19 +60,19 @@ function ensureDemoTenant() {
             id: 'TN-' + Date.now(),
             code: 'DEMO',
             name: 'Demo Transport',
-            phone: NEW_PHONE,
+            phone: DEFAULT_PHONE,
             status: 'Active',
             notes: 'Primary tenant account',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         });
     } else if (demoTenant.phone === OLD_PHONE) {
-        demoTenant.phone = NEW_PHONE;
+        demoTenant.phone = DEFAULT_PHONE;
     }
 
     if (!registry.host) {
         registry.host = {
-            phone: NEW_PHONE,
+            phone: DEFAULT_PHONE,
             name: 'System Admin',
             createdAt: new Date().toISOString()
         };
@@ -307,6 +319,10 @@ async function handlePortalLogin(e) {
 
 /**
  * Handles the Host Admin login process.
+ * Fixed to work across different PCs by:
+ * 1. Waiting longer for cloud sync with retries
+ * 2. Always trusting cloud registry over local defaults
+ * 3. Allowing first-time setup when no real host exists yet
  */
 async function handleHostPortalLogin(e) {
     if (e) e.preventDefault();
@@ -330,26 +346,52 @@ async function handleHostPortalLogin(e) {
     if (loginBtn) loginBtn.classList.add('loading');
 
     try {
+        // STEP 1: Try to get cloud registry (with extended timeout and retries)
+        let cloudSyncSuccess = false;
         if (typeof waitForRegistrySync === 'function') {
-            await waitForRegistrySync(8000); // Increased timeout to match tenant login
+            console.log('[Portal] Host login: waiting for cloud registry sync...');
+            cloudSyncSuccess = await waitForRegistrySync(12000); // Extended timeout for host login
+        }
+
+        // STEP 2: If first sync attempt failed, try one more direct fetch
+        if (!cloudSyncSuccess && window.firebaseReady && typeof getRegistryCloud === 'function') {
+            console.log('[Portal] Host login: retrying direct cloud fetch...');
+            await new Promise(r => setTimeout(r, 2000)); // Wait 2s before retry
+            try {
+                await getRegistryCloud();
+                cloudSyncSuccess = !!window.registrySyncedCloud;
+            } catch (retryErr) {
+                console.warn('[Portal] Retry cloud fetch failed:', retryErr.message);
+            }
         }
 
         const registry = getRegistry();
         const normalizedPhone = normalizePhone(phone);
+        const DEFAULT_PHONE = normalizePhone('+60123456789');
+        const OLD_DEFAULT = normalizePhone('+60198765432');
 
         if (registry.host && registry.host.phone) {
             const existingPhone = normalizePhone(registry.host.phone);
-            const DEFAULT_PHONE = normalizePhone('+60123456789');
-            const OLD_DEFAULT = normalizePhone('+60198765432');
+            const isDefault = (existingPhone === DEFAULT_PHONE || existingPhone === OLD_DEFAULT);
 
-            // If it's the default placeholder host, allow the user to take it over correctly
-            if (existingPhone !== normalizedPhone && existingPhone !== DEFAULT_PHONE && existingPhone !== OLD_DEFAULT) {
-                if (loginBtn) loginBtn.classList.remove('loading');
-                showPortalError('Host account already exists with a different phone number. Access denied.');
-                return false;
+            if (!isDefault && existingPhone !== normalizedPhone) {
+                // Real host exists with different phone - check if cloud had data
+                if (cloudSyncSuccess) {
+                    // Cloud was synced and host phone still doesn't match: access denied
+                    if (loginBtn) loginBtn.classList.remove('loading');
+                    showPortalError('Host account already exists with a different phone number. Access denied.');
+                    return false;
+                } else {
+                    // Cloud sync failed - the local data might be stale/wrong
+                    // Show a helpful message suggesting to check network
+                    if (loginBtn) loginBtn.classList.remove('loading');
+                    showPortalError('Unable to verify host credentials (cloud sync failed). Please check your internet connection and try again.');
+                    return false;
+                }
             }
         }
 
+        // STEP 3: Update host in registry
         registry.host = {
             phone: normalizedPhone,
             name: name,
@@ -410,7 +452,7 @@ async function handleHostPortalLogin(e) {
     } catch (err) {
         console.error('[Portal] Host Login Error:', err);
         if (loginBtn) loginBtn.classList.remove('loading');
-        showPortalError('System error during host login.');
+        showPortalError('System error during host login. Please check your internet connection and try again.');
     }
 
     return false;
@@ -418,12 +460,43 @@ async function handleHostPortalLogin(e) {
 
 /**
  * Initializes the portal page.
+ * Cloud sync is attempted FIRST before local seeding to prevent
+ * overwriting cloud data with defaults on new PCs.
  */
 async function portalInit() {
-    ensureDemoTenant();
-
+    // STEP 1: Try to fetch cloud registry FIRST before seeding local defaults
+    let cloudRegistryLoaded = false;
     if (typeof getRegistryCloud === 'function') {
-        await getRegistryCloud();
+        try {
+            console.log('[Portal] Fetching cloud registry before local seed...');
+            const cloudReg = await getRegistryCloud();
+            if (cloudReg) {
+                cloudRegistryLoaded = true;
+                console.log('[Portal] Cloud registry loaded successfully ✅');
+            }
+        } catch (err) {
+            console.warn('[Portal] Cloud registry fetch failed, will use local:', err.message);
+        }
+    }
+
+    // STEP 2: Only seed demo tenant if cloud didn't provide a registry
+    if (!cloudRegistryLoaded) {
+        ensureDemoTenant();
+    } else {
+        // Even after cloud sync, ensure tenants array and basic structure
+        const data = localStorage.getItem(PORTAL_REGISTRY_KEY);
+        if (data) {
+            try {
+                const registry = JSON.parse(data);
+                if (!registry.tenants) registry.tenants = [];
+                localStorage.setItem(PORTAL_REGISTRY_KEY, JSON.stringify(registry));
+            } catch (e) {
+                console.error('[Portal] Failed to validate synced registry:', e);
+                ensureDemoTenant(); // Fallback
+            }
+        } else {
+            ensureDemoTenant(); // Fallback if cloud returned null
+        }
     }
 
     const urlParams = new URLSearchParams(window.location.search);
