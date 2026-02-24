@@ -10,9 +10,9 @@ function downloadSampleCSV() {
     const type = document.getElementById('importType').value;
     let csv;
     if (type === 'receipts') {
-        csv = 'date,clientName,clientPhone,clientAddress,type,amount,route,paymentMethod,notes\n';
-        csv += '2025-01-15,Ahmad bin Ali,+60123456789,Jalan Sultan,monthly,500.00,Kuala Lumpur â†’ Shah Alam,Cash,January payment\n';
-        csv += '2025-01-20,Siti Aminah,+60129876543,Taman Melawati,trip,35.00,Ampang â†’ KLIA,Bank Transfer,Airport trip\n';
+        csv = 'date,clientName,clientPhone,clientAddress,type,amount,route,paymentStatus,notes\n';
+        csv += '2025-01-15,Ahmad bin Ali,+60123456789,Jalan Sultan,monthly,500.00,KL to Shah Alam,Paid,January payment\n';
+        csv += '2025-01-20,Siti Aminah,+60129876543,Taman Melawati,trip,35.00,Ampang to KLIA,Pending,Airport trip\n';
     } else {
         csv = 'date,amount,liters,carPlate,notes\n';
         csv += '2025-01-10,120.00,38.5,BPE813,Full tank\n';
@@ -79,7 +79,7 @@ function parseCSV(csv, type) {
                 type: row.type || 'monthly',
                 amount: parseFloat(row.amount) || 0,
                 route: row.route || '',
-                paymentMethod: row.paymentMethod || 'Cash',
+                paymentStatus: row.paymentStatus || row.paymentMethod || 'Paid',
                 notes: row.notes || ''
             });
         } else {
@@ -112,7 +112,7 @@ function showImportPreview(data, type) {
     if (type === 'receipts') {
         tableHtml = `
             <table class="import-preview-table">
-                <thead><tr><th>Date</th><th>Client</th><th>Type</th><th>Amount</th><th>Route</th></tr></thead>
+                <thead><tr><th>Date</th><th>Client</th><th>Type</th><th>Amount</th><th>Status</th><th>Route</th></tr></thead>
                 <tbody>
                     ${data.slice(0, 10).map(r => `
                         <tr>
@@ -120,10 +120,11 @@ function showImportPreview(data, type) {
                             <td>${r.clientName}</td>
                             <td>${r.type}</td>
                             <td>RM ${r.amount.toFixed(2)}</td>
+                            <td>${r.paymentStatus}</td>
                             <td>${r.route}</td>
                         </tr>
                     `).join('')}
-                    ${data.length > 10 ? `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">... and ${data.length - 10} more records</td></tr>` : ''}
+                    ${data.length > 10 ? `<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">... and ${data.length - 10} more records</td></tr>` : ''}
                 </tbody>
             </table>
         `;
@@ -136,7 +137,7 @@ function showImportPreview(data, type) {
                         <tr>
                             <td>${r.date}</td>
                             <td>RM ${r.amount.toFixed(2)}</td>
-                            <td>${r.liters ? r.liters.toFixed(1) + 'L' : 'â€”'}</td>
+                            <td>${r.liters ? r.liters.toFixed(1) + 'L' : '\u2014'}</td>
                             <td>${r.carPlate}</td>
                             <td>${r.notes}</td>
                         </tr>
@@ -171,7 +172,7 @@ function confirmImport() {
                 clientPhone: row.clientPhone,
                 clientAddress: row.clientAddress,
                 type: row.type,
-                paymentMethod: row.paymentMethod,
+                paymentStatus: row.paymentStatus || 'Paid',
                 total: row.amount,
                 items: [{
                     description: row.type === 'monthly' ? 'Monthly transport - ' + row.route : 'Trip: ' + row.route,
@@ -203,8 +204,21 @@ function confirmImport() {
 
     saveAppData(appData);
 
-    // Refresh dashboard so grand total & charts update immediately
+    // Refresh ALL relevant sections based on import type
     updateDashboard();
+
+    if (type === 'receipts') {
+        if (typeof loadReceipts === 'function') loadReceipts();
+        if (typeof loadTrips === 'function') loadTrips();
+        if (typeof loadClients === 'function') loadClients();
+        if (typeof populateClientDropdown === 'function') populateClientDropdown();
+    } else {
+        // CRITICAL: Refresh petrol section after petrol import
+        if (typeof loadPetrolExpenses === 'function') loadPetrolExpenses();
+        if (typeof updatePetrolDashboard === 'function') updatePetrolDashboard();
+    }
+
+    const importCount = importedData.length;
 
     // Reset UI
     importedData = null;
@@ -212,5 +226,5 @@ function confirmImport() {
     document.getElementById('confirmImportBtn').style.display = 'none';
     document.getElementById('importFileInput').value = '';
 
-    showToast(`Successfully imported ${type === 'receipts' ? 'receipt' : 'petrol expense'} data!`, 'success');
+    showToast(`Successfully imported ${importCount} ${type === 'receipts' ? 'receipt' : 'petrol expense'} records!`, 'success');
 }
