@@ -57,7 +57,19 @@ function saveAppData(data) {
     localStorage.setItem(key, JSON.stringify(data));
     // Save to Firestore cloud in background
     if (typeof saveAppDataCloud === 'function') {
-        saveAppDataCloud(data);
+        saveAppDataCloud(data).then(() => {
+            console.log('[AppData] Saved to cloud ✅');
+        }).catch(err => {
+            console.error('[AppData] Cloud save FAILED:', err.message);
+            // Retry once after 3 seconds
+            setTimeout(() => {
+                saveAppDataCloud(data).then(() => {
+                    console.log('[AppData] Retry succeeded ✅');
+                }).catch(err2 => {
+                    console.error('[AppData] Retry also failed:', err2.message);
+                });
+            }, 3000);
+        });
     }
 }
 

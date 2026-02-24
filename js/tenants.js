@@ -58,7 +58,24 @@ function getRegistry() {
 function saveRegistry(registry) {
     localStorage.setItem(REGISTRY_KEY, JSON.stringify(registry));
     if (typeof saveRegistryCloud === 'function') {
-        saveRegistryCloud(registry);
+        // Await cloud save and provide feedback
+        saveRegistryCloud(registry).then(() => {
+            console.log('[Registry] Saved to cloud ✅');
+        }).catch(err => {
+            console.error('[Registry] Cloud save FAILED:', err.message);
+            // Retry once after 3 seconds
+            setTimeout(() => {
+                console.log('[Registry] Retrying cloud save...');
+                saveRegistryCloud(registry).then(() => {
+                    console.log('[Registry] Retry succeeded ✅');
+                }).catch(err2 => {
+                    console.error('[Registry] Retry also failed:', err2.message);
+                    if (typeof showToast === 'function') {
+                        showToast('Warning: Data saved locally but cloud sync failed. Check your internet.', 'error');
+                    }
+                });
+            }, 3000);
+        });
     }
 }
 
