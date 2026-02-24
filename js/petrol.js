@@ -82,9 +82,15 @@ function processFile(file) {
         return;
     }
 
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/heic'];
-    if (!allowedTypes.includes(file.type) && !file.name.match(/\.(pdf|jpg|jpeg|png|webp|heic)$/i)) {
-        showToast('Invalid file type. Please upload PDF, JPEG, PNG, or WebP.', 'error');
+    const allowedTypes = [
+        'application/pdf',
+        'image/jpeg', 'image/jpg', 'image/png', 'image/webp',
+        'image/heic', 'image/heif', 'image/svg+xml',
+        'image/bmp', 'image/tiff', 'image/gif'
+    ];
+    const allowedExts = /\.(pdf|jpg|jpeg|png|webp|heic|heif|svg|bmp|tiff|tif|gif)$/i;
+    if (!allowedTypes.includes(file.type) && !file.name.match(allowedExts)) {
+        showToast('Invalid file type. Please upload PDF, JPEG, PNG, SVG, WebP, or HEIC.', 'error');
         return;
     }
 
