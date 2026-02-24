@@ -35,9 +35,25 @@ async function waitForRegistrySync(timeoutMs = 8000, requiredTenantCode = null) 
     // Reset cloud sync flag for this wait session
     window.registrySyncedCloud = false;
 
-    // 1. Wait for Firebase to be ready
-    while (!window.firebaseReady && (Date.now() - start < 4000)) {
-        await new Promise(r => setTimeout(r, 200));
+    // 1. Wait for Firebase init to FULLY complete (including auth)
+    if (window._firebaseInitPromise) {
+        console.log('[TransitPay] Awaiting Firebase init promise...');
+        try {
+            await Promise.race([
+                window._firebaseInitPromise,
+                new Promise(resolve => setTimeout(resolve, Math.min(timeoutMs - 1000, 12000)))
+            ]);
+        } catch (e) {
+            console.warn('[TransitPay] Firebase init wait failed:', e.message);
+        }
+    }
+
+    // Fallback: if init promise doesn't exist, poll for ready
+    if (!window.firebaseReady) {
+        const pollEnd = Math.min(start + 5000, start + timeoutMs - 2000);
+        while (!window.firebaseReady && Date.now() < pollEnd) {
+            await new Promise(r => setTimeout(r, 300));
+        }
     }
 
     // 2. Try fresh fetch

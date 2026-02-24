@@ -19,79 +19,109 @@ const firebaseConfig = {
 let db = null;
 window.firebaseReady = false;
 window.registrySynced = false;
+window._firebaseInitPromise = null; // Track the init promise so callers can await it
 
-
-function initFirebase() {
+/**
+ * Initialize Firebase with proper async handling.
+ * Key fix: We AWAIT anonymous auth before marking firebaseReady = true.
+ * This prevents Firestore reads from failing with "client is offline"
+ * because auth hasn't completed yet.
+ */
+async function initFirebase() {
     try {
         if (!firebase.apps || firebase.apps.length === 0) {
             firebase.initializeApp(firebaseConfig);
         }
         db = firebase.firestore();
 
-        // Enable long polling and disable fetch streams to bypass potential proxy/firewall issues
-        // This is the most resilient combination for restricted networks.
+        // Enable long polling and disable fetch streams to bypass proxy/firewall issues
         db.settings({
             experimentalForceLongPolling: true,
             useFetchStreams: false
         });
 
-        // Try anonymous login to satisfy "authenticated only" security rules
-        if (firebase.auth) {
-            firebase.auth().signInAnonymously()
-                .then(() => console.log('[TransitPay] Anonymous auth success ✅'))
-                .catch(err => console.warn('[TransitPay] Anonymous auth failed (this is usually OK):', err.message));
+        // STEP 1: Try persistence FIRST (before auth, before any reads)
+        // Use synchronizeTabs:false for better compatibility (especially Incognito)
+        try {
+            await db.enablePersistence({ synchronizeTabs: false });
+            console.log('[TransitPay] Persistence enabled ✅');
+        } catch (persistErr) {
+            if (persistErr.code === 'failed-precondition') {
+                console.warn('[TransitPay] Persistence: Multiple tabs open (OK)');
+            } else if (persistErr.code === 'unimplemented') {
+                console.warn('[TransitPay] Persistence: Not supported in this browser (OK)');
+            } else {
+                console.warn('[TransitPay] Persistence failed:', persistErr.message, '(continuing without it)');
+            }
+            // This is OK - we continue without persistence
         }
 
-        // Enable offline persistence
-        db.enablePersistence({ synchronizeTabs: true })
-            .then(() => console.log('[TransitPay] Persistence enabled ✅'))
-            .catch((err) => {
-                if (err.code == 'failed-precondition') {
-                    console.warn('[TransitPay] Persistence failed: Multiple tabs open');
-                } else if (err.code == 'unimplemented') {
-                    console.warn('[TransitPay] Persistence failed: Browser not supported');
-                }
-            });
+        // STEP 2: AWAIT anonymous auth - this is CRITICAL
+        // Without waiting for auth, Firestore reads will fail if security rules require auth
+        if (firebase.auth) {
+            try {
+                const authResult = await Promise.race([
+                    firebase.auth().signInAnonymously(),
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 10000))
+                ]);
+                console.log('[TransitPay] Anonymous auth success ✅', authResult.user ? authResult.user.uid : '');
+            } catch (authErr) {
+                console.warn('[TransitPay] Anonymous auth failed:', authErr.message);
+                // Continue anyway - some Firestore rules might allow unauthenticated access
+            }
+        }
 
-        // Explicitly force network online
+        // STEP 3: Force network enablement
         if (typeof db.enableNetwork === 'function') {
-            db.enableNetwork().catch(() => { });
+            try {
+                await db.enableNetwork();
+                console.log('[TransitPay] Network enabled ✅');
+            } catch (netErr) {
+                console.warn('[TransitPay] enableNetwork failed:', netErr.message);
+            }
+        }
+
+        // STEP 4: Verify connectivity with a quick test read
+        let isOnline = false;
+        try {
+            const testSnap = await Promise.race([
+                db.collection('config').doc('registry').get(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Connection test timeout')), 8000))
+            ]);
+            isOnline = true;
+            console.log('[TransitPay] Firestore connectivity verified ✅ (doc exists:', testSnap.exists, ')');
+        } catch (testErr) {
+            console.warn('[TransitPay] Firestore connectivity test failed:', testErr.message);
+            console.warn('[TransitPay] Will continue with firebaseReady=true but reads may use cache/fail');
         }
 
         window.firebaseReady = true;
-        console.log('[TransitPay] Firebase initialized with High Resilience mode ✅');
+        window._firebaseOnline = isOnline;
+        console.log('[TransitPay] Firebase initialized ✅ (online:', isOnline, ')');
 
-        // Monitor connection and force reconnect if stuck offline
-        setInterval(() => {
-            if (window._fs_offline_count > 5) {
-                console.warn('[TransitPay] Connectivity stalled. Forcing Firestore reconnect...');
-                window._fs_offline_count = 0;
-                db.terminate().then(() => {
-                    db.clearPersistence().then(() => {
-                        initFirebase();
-                    });
-                });
-            }
-        }, 30000);
     } catch (err) {
         console.warn('[TransitPay] Firebase init failed, using localStorage fallback:', err);
         window.firebaseReady = false;
+        window._firebaseOnline = false;
     }
 }
 
 // function to retry init if failed
-function ensureFirebase() {
+async function ensureFirebase() {
     if (window.firebaseReady) return true;
     if (typeof firebase !== 'undefined') {
-        initFirebase();
+        if (!window._firebaseInitPromise) {
+            window._firebaseInitPromise = initFirebase();
+        }
+        await window._firebaseInitPromise;
         return window.firebaseReady;
     }
     return false;
 }
 
-// Call init immediately
+// Call init immediately (store promise so others can await it)
 if (typeof firebase !== 'undefined') {
-    initFirebase();
+    window._firebaseInitPromise = initFirebase();
 } else {
     console.warn('[TransitPay] Firebase SDK not loaded yet. Will retry on first data call.');
 }
@@ -122,30 +152,36 @@ function getRegistryDocRef() {
 
 // ==================== REGISTRY (Tenant List) ====================
 async function fsGetRegistry() {
-    if (!window.firebaseReady) return null;
+    if (!window.firebaseReady) {
+        // Wait for init to complete if it's in progress
+        if (window._firebaseInitPromise) {
+            await window._firebaseInitPromise;
+        }
+        if (!window.firebaseReady) return null;
+    }
     try {
-        // Try to force server fetch if we are looking for a fresh sync
-        const snap = await getRegistryDocRef().get();
+        // Use a timeout to prevent hanging forever
+        const snap = await Promise.race([
+            getRegistryDocRef().get(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Registry fetch timeout (10s)')), 10000))
+        ]);
 
         if (snap.exists) {
             window.registrySynced = true;
             window.registrySyncedCloud = true;
+            console.log('[FS] Registry fetched from cloud ✅');
             return snap.data();
         }
+        console.log('[FS] Registry document does not exist in cloud');
         return null;
     } catch (err) {
         console.error('[FS] getRegistry error:', err.message);
 
-        // If it says "offline", try to force network enablement immediately
+        // If offline, try to force network
         if (err.message && err.message.toLowerCase().includes('offline')) {
-            console.warn('[FS] Client appears offline to Firestore. Attempting to force network...');
+            console.warn('[FS] Client appears offline. Attempting to force network...');
             if (db && typeof db.enableNetwork === 'function') {
                 db.enableNetwork().catch(() => { });
-            }
-            // Trigger a settings reload if we keep failing
-            window._fs_offline_count = (window._fs_offline_count || 0) + 1;
-            if (window._fs_offline_count > 3) {
-                console.log('[FS] Persistent offline detected. Retrying with long polling...');
             }
         }
         window.registrySyncedCloud = false;
@@ -168,10 +204,17 @@ async function fsSaveRegistry(registry) {
 
 // ==================== APP DATA (Per Tenant) ====================
 async function fsGetAppData(tenantCode) {
-    if (!window.firebaseReady) return null;
+    if (!window.firebaseReady) {
+        if (window._firebaseInitPromise) {
+            await window._firebaseInitPromise;
+        }
+        if (!window.firebaseReady) return null;
+    }
     try {
-        // First try to get from server directly to bypass stale cache
-        const snap = await getTenantDocRef(tenantCode).get();
+        const snap = await Promise.race([
+            getTenantDocRef(tenantCode).get(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('AppData fetch timeout (10s)')), 10000))
+        ]);
         if (snap.exists) {
             return snap.data();
         }
@@ -313,6 +356,11 @@ window.saveAppDataCloud = async function (data) {
 window.getAppDataCloud = async function () {
     const tenantCode = getActiveTenantCode();
 
+    // Wait for Firebase init to complete if in progress
+    if (window._firebaseInitPromise && !window.firebaseReady) {
+        await window._firebaseInitPromise;
+    }
+
     // Try Firestore first
     if (window.firebaseReady) {
         const fsData = await fsGetAppData(tenantCode);
@@ -332,7 +380,13 @@ window.getAppDataCloud = async function () {
 
 // ==================== ENHANCED Registry ====================
 window.getRegistryCloud = async function () {
-    if (!ensureFirebase()) {
+    // Wait for Firebase init to complete if in progress
+    if (window._firebaseInitPromise && !window.firebaseReady) {
+        console.log('[TransitPay] Waiting for Firebase init before registry fetch...');
+        await window._firebaseInitPromise;
+    }
+
+    if (!window.firebaseReady) {
         console.warn('[TransitPay] Firebase not ready for getRegistryCloud, using local.');
     } else {
         const fsReg = await fsGetRegistry();
