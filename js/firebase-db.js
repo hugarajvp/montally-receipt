@@ -27,6 +27,54 @@ window._firebaseInitPromise = null; // Track the init promise so callers can awa
  * This prevents Firestore reads from failing with "client is offline"
  * because auth hasn't completed yet.
  */
+/**
+ * Detect if we're in Incognito / Private Browsing mode.
+ * In Incognito, IndexedDB persistence causes Firestore to get stuck offline.
+ */
+async function isIncognitoMode() {
+    try {
+        // Try writing to IndexedDB - in some Incognito modes this fails or has limited storage
+        const testDb = indexedDB.open('__transitpay_test');
+        return new Promise((resolve) => {
+            testDb.onerror = () => resolve(true);
+            testDb.onsuccess = () => {
+                // Check storage estimate - Incognito typically has very limited quota
+                if (navigator.storage && navigator.storage.estimate) {
+                    navigator.storage.estimate().then(est => {
+                        // Incognito usually has < 120MB quota
+                        resolve(est.quota < 120000000);
+                    }).catch(() => resolve(false));
+                } else {
+                    resolve(false);
+                }
+                // Clean up test DB
+                try { indexedDB.deleteDatabase('__transitpay_test'); } catch (e) { }
+            };
+        });
+    } catch (e) {
+        return true; // If we can't even open IndexedDB, likely restricted
+    }
+}
+
+/**
+ * Reset Firestore network connection.
+ * This "kicks" Firestore out of a stuck offline state.
+ */
+async function resetFirestoreNetwork() {
+    if (!db) return false;
+    try {
+        console.log('[TransitPay] Resetting Firestore network connection...');
+        await db.disableNetwork();
+        await new Promise(r => setTimeout(r, 500)); // Brief pause
+        await db.enableNetwork();
+        console.log('[TransitPay] Network reset complete ✅');
+        return true;
+    } catch (err) {
+        console.warn('[TransitPay] Network reset failed:', err.message);
+        return false;
+    }
+}
+
 async function initFirebase() {
     try {
         if (!firebase.apps || firebase.apps.length === 0) {
@@ -40,24 +88,31 @@ async function initFirebase() {
             useFetchStreams: false
         });
 
-        // STEP 1: Try persistence FIRST (before auth, before any reads)
-        // Use synchronizeTabs:false for better compatibility (especially Incognito)
-        try {
-            await db.enablePersistence({ synchronizeTabs: false });
-            console.log('[TransitPay] Persistence enabled ✅');
-        } catch (persistErr) {
-            if (persistErr.code === 'failed-precondition') {
-                console.warn('[TransitPay] Persistence: Multiple tabs open (OK)');
-            } else if (persistErr.code === 'unimplemented') {
-                console.warn('[TransitPay] Persistence: Not supported in this browser (OK)');
-            } else {
-                console.warn('[TransitPay] Persistence failed:', persistErr.message, '(continuing without it)');
-            }
-            // This is OK - we continue without persistence
+        // STEP 1: Check if Incognito mode
+        const incognito = await isIncognitoMode();
+        window._isIncognito = incognito;
+        if (incognito) {
+            console.log('[TransitPay] Incognito/Private mode detected — skipping persistence');
         }
 
-        // STEP 2: AWAIT anonymous auth - this is CRITICAL
-        // Without waiting for auth, Firestore reads will fail if security rules require auth
+        // STEP 2: Try persistence ONLY if NOT in Incognito
+        // Persistence in Incognito causes Firestore to get stuck in "offline" mode
+        if (!incognito) {
+            try {
+                await db.enablePersistence({ synchronizeTabs: false });
+                console.log('[TransitPay] Persistence enabled ✅');
+            } catch (persistErr) {
+                if (persistErr.code === 'failed-precondition') {
+                    console.warn('[TransitPay] Persistence: Multiple tabs open (OK)');
+                } else if (persistErr.code === 'unimplemented') {
+                    console.warn('[TransitPay] Persistence: Not supported in this browser (OK)');
+                } else {
+                    console.warn('[TransitPay] Persistence failed:', persistErr.message, '(continuing without it)');
+                }
+            }
+        }
+
+        // STEP 3: AWAIT anonymous auth - this is CRITICAL
         if (firebase.auth) {
             try {
                 const authResult = await Promise.race([
@@ -67,11 +122,10 @@ async function initFirebase() {
                 console.log('[TransitPay] Anonymous auth success ✅', authResult.user ? authResult.user.uid : '');
             } catch (authErr) {
                 console.warn('[TransitPay] Anonymous auth failed:', authErr.message);
-                // Continue anyway - some Firestore rules might allow unauthenticated access
             }
         }
 
-        // STEP 3: Force network enablement
+        // STEP 4: Force network enablement
         if (typeof db.enableNetwork === 'function') {
             try {
                 await db.enableNetwork();
@@ -81,7 +135,7 @@ async function initFirebase() {
             }
         }
 
-        // STEP 4: Verify connectivity with a quick test read
+        // STEP 5: Verify connectivity with a quick test read
         let isOnline = false;
         try {
             const testSnap = await Promise.race([
@@ -92,12 +146,30 @@ async function initFirebase() {
             console.log('[TransitPay] Firestore connectivity verified ✅ (doc exists:', testSnap.exists, ')');
         } catch (testErr) {
             console.warn('[TransitPay] Firestore connectivity test failed:', testErr.message);
-            console.warn('[TransitPay] Will continue with firebaseReady=true but reads may use cache/fail');
+
+            // RECOVERY: If stuck offline, try resetting the network
+            if (testErr.message && testErr.message.toLowerCase().includes('offline')) {
+                console.log('[TransitPay] Attempting network recovery...');
+                const resetOk = await resetFirestoreNetwork();
+                if (resetOk) {
+                    // Retry the test read after reset
+                    try {
+                        const retrySnap = await Promise.race([
+                            db.collection('config').doc('registry').get({ source: 'server' }),
+                            new Promise((_, reject) => setTimeout(() => reject(new Error('Retry timeout')), 8000))
+                        ]);
+                        isOnline = true;
+                        console.log('[TransitPay] Recovery successful! Firestore connected ✅');
+                    } catch (retryErr) {
+                        console.warn('[TransitPay] Recovery retry also failed:', retryErr.message);
+                    }
+                }
+            }
         }
 
         window.firebaseReady = true;
         window._firebaseOnline = isOnline;
-        console.log('[TransitPay] Firebase initialized ✅ (online:', isOnline, ')');
+        console.log('[TransitPay] Firebase initialized ✅ (online:', isOnline, ', incognito:', incognito, ')');
 
     } catch (err) {
         console.warn('[TransitPay] Firebase init failed, using localStorage fallback:', err);
@@ -177,11 +249,25 @@ async function fsGetRegistry() {
     } catch (err) {
         console.error('[FS] getRegistry error:', err.message);
 
-        // If offline, try to force network
+        // If offline, try network reset + retry with server source
         if (err.message && err.message.toLowerCase().includes('offline')) {
-            console.warn('[FS] Client appears offline. Attempting to force network...');
-            if (db && typeof db.enableNetwork === 'function') {
-                db.enableNetwork().catch(() => { });
+            console.warn('[FS] Client appears offline. Attempting network reset + retry...');
+            const resetOk = await resetFirestoreNetwork();
+            if (resetOk) {
+                try {
+                    const retrySnap = await Promise.race([
+                        getRegistryDocRef().get({ source: 'server' }),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Registry retry timeout')), 10000))
+                    ]);
+                    if (retrySnap.exists) {
+                        window.registrySynced = true;
+                        window.registrySyncedCloud = true;
+                        console.log('[FS] Registry fetched after network reset ✅');
+                        return retrySnap.data();
+                    }
+                } catch (retryErr) {
+                    console.warn('[FS] Registry retry after reset also failed:', retryErr.message);
+                }
             }
         }
         window.registrySyncedCloud = false;
@@ -221,10 +307,24 @@ async function fsGetAppData(tenantCode) {
         return null;
     } catch (err) {
         console.error(`[FS] getAppData error for ${tenantCode}:`, err.message);
+
+        // If offline, try network reset + retry with server source
         if (err.message && err.message.toLowerCase().includes('offline')) {
-            console.warn('[FS] Client appears offline. Re-requesting network...');
-            if (db && typeof db.enableNetwork === 'function') {
-                db.enableNetwork().catch(() => { });
+            console.warn('[FS] Client appears offline. Attempting network reset + retry...');
+            const resetOk = await resetFirestoreNetwork();
+            if (resetOk) {
+                try {
+                    const retrySnap = await Promise.race([
+                        getTenantDocRef(tenantCode).get({ source: 'server' }),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('AppData retry timeout')), 10000))
+                    ]);
+                    if (retrySnap.exists) {
+                        console.log(`[FS] AppData for ${tenantCode} fetched after network reset ✅`);
+                        return retrySnap.data();
+                    }
+                } catch (retryErr) {
+                    console.warn(`[FS] AppData retry for ${tenantCode} also failed:`, retryErr.message);
+                }
             }
         }
         return null;
