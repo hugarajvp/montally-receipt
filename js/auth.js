@@ -5,6 +5,45 @@
 
 const PORTAL_REGISTRY_KEY = 'transitpay_registry';
 
+// =========================================================
+// HARDCODED TENANT FALLBACK
+// These are injected immediately so login works on ANY
+// browser even when Firestore cloud sync is slow/failing.
+// =========================================================
+const KNOWN_TENANTS = [
+    { code: 'HUGA', name: 'Huga Services', phone: '+60178850938', status: 'Active', createdAt: '2026-02-19T00:00:00.000Z' },
+    { code: 'VIONA', name: 'VIONA', phone: '+60165858672', status: 'Active', createdAt: '2026-02-25T00:00:00.000Z' },
+    { code: 'JUDY', name: 'Judy transport', phone: '+60169071675', status: 'Active', createdAt: '2026-02-25T00:00:00.000Z' }
+];
+
+/**
+ * Merges KNOWN_TENANTS into the local registry so login
+ * works immediately without waiting for cloud sync.
+ */
+function injectKnownTenants() {
+    try {
+        const raw = localStorage.getItem(PORTAL_REGISTRY_KEY);
+        let registry = raw ? JSON.parse(raw) : { host: {}, tenants: [] };
+        if (!registry.tenants) registry.tenants = [];
+
+        let changed = false;
+        for (const kt of KNOWN_TENANTS) {
+            const exists = registry.tenants.find(t => (t.code || '').toUpperCase() === kt.code);
+            if (!exists) {
+                registry.tenants.push(kt);
+                changed = true;
+                console.log('[Portal] Injected fallback tenant:', kt.code);
+            }
+        }
+        if (changed) {
+            localStorage.setItem(PORTAL_REGISTRY_KEY, JSON.stringify(registry));
+            console.log('[Portal] Fallback tenants saved to localStorage ✅');
+        }
+    } catch (e) {
+        console.warn('[Portal] Could not inject known tenants:', e.message);
+    }
+}
+
 /**
  * Ensures a DEMO tenant exists in the registry for testing/first-run.
  * IMPORTANT: Only seeds default data when NO registry exists at all (local or cloud).
@@ -490,6 +529,9 @@ async function handleHostPortalLogin(e) {
  * overwriting cloud data with defaults on new PCs.
  */
 async function portalInit() {
+    // STEP 0: Inject known tenants immediately so login works without cloud sync
+    injectKnownTenants();
+
     // STEP 1: Try to fetch cloud registry FIRST before seeding local defaults
     let cloudRegistryLoaded = false;
     if (typeof getRegistryCloud === 'function') {
