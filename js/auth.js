@@ -194,20 +194,44 @@ async function handlePortalLogin(e) {
             // Wait a moment for auth to stabilize
             await new Promise(r => setTimeout(r, 1000));
 
-            activateTenantScope(searchCode);
             try {
-                if (typeof getAppDataCloud === 'function') {
-                    const cloudData = await getAppDataCloud();
-                    if (cloudData && cloudData.user && (cloudData.user.tenantCode || '').toUpperCase() === searchCode) {
+                // Method 1: Directly check if tenant document exists in Firestore
+                if (typeof db !== 'undefined' && db) {
+                    console.log(`[Portal] Checking Firestore tenants/${searchCode}...`);
+                    const tenantSnap = await Promise.race([
+                        db.collection('tenants').doc(searchCode).get(),
+                        new Promise((_, rej) => setTimeout(() => rej(new Error('Discovery timeout')), 8000))
+                    ]);
+                    if (tenantSnap.exists) {
+                        const tenantData = tenantSnap.data();
                         tenant = {
-                            id: cloudData.user.tenantId || ('TN-' + Date.now()),
+                            id: 'TN-' + Date.now(),
                             code: searchCode,
-                            name: cloudData.user.tenantName || searchCode,
-                            phone: cloudData.user.phone,
+                            name: tenantData.tenantName || searchCode,
+                            phone: tenantData.phone || '',
                             status: 'Active',
                             isDiscovered: true
                         };
-                        console.log('[Portal] Success! Tenant discovered via direct fetch ✅');
+                        console.log('[Portal] Tenant discovered via direct Firestore lookup ✅');
+                    }
+                }
+
+                // Method 2: Fallback - try via getAppDataCloud
+                if (!tenant) {
+                    activateTenantScope(searchCode);
+                    if (typeof getAppDataCloud === 'function') {
+                        const cloudData = await getAppDataCloud();
+                        if (cloudData) {
+                            tenant = {
+                                id: (cloudData.user && cloudData.user.tenantId) || ('TN-' + Date.now()),
+                                code: searchCode,
+                                name: (cloudData.user && cloudData.user.tenantName) || cloudData.tenantName || searchCode,
+                                phone: (cloudData.user && cloudData.user.phone) || '',
+                                status: 'Active',
+                                isDiscovered: true
+                            };
+                            console.log('[Portal] Tenant discovered via getAppDataCloud fallback ✅');
+                        }
                     }
                 }
             } catch (discoveryErr) {
