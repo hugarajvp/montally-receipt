@@ -32,15 +32,12 @@
             border-radius: 8px;
             cursor: pointer;
             margin: 10px 5px;
+            display: block;
+            width: 100%;
         }
 
         button:hover {
             background: #c73750;
-        }
-
-        button:disabled {
-            background: #555;
-            cursor: not-allowed;
         }
 
         .log {
@@ -49,7 +46,7 @@
             border-radius: 8px;
             margin-top: 20px;
             font-family: monospace;
-            font-size: 14px;
+            font-size: 13px;
             max-height: 400px;
             overflow-y: auto;
             white-space: pre-wrap;
@@ -71,186 +68,125 @@
 
 <body>
     <div class="container">
-        <h1>🔧 Fix Firestore Data</h1>
-        <p>This will set up the correct registry structure with all 3 tenants (HUGA, VIONA, JUDY) in your Firestore
-            database.</p>
-
-        <button id="fixBtn" onclick="fixAll()">🚀 Fix Everything Now</button>
-
-        <div class="log" id="log">Ready. Click the button to start...</div>
+        <h1>🔧 Fix Firestore Data v3</h1>
+        <p>Click the button below. It will write data and verify.</p>
+        <button onclick="fixAll()">🚀 Fix Everything Now</button>
+        <div class="log" id="log">Ready...</div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
     <script>
-        const firebaseConfig = {
+        firebase.initializeApp({
             apiKey: "AIzaSyAP9qvV3TE4BhA6hk4zJDkICTbrN93Z63k",
             authDomain: "transitpay-e445.firebaseapp.com",
             projectId: "transitpay-e445",
             storageBucket: "transitpay-e445.firebasestorage.app",
             messagingSenderId: "900738758923",
-            appId: "1:900738758923:web:d1bf99f339bdb135130a0e",
-            measurementId: "G-GF21HMZ445"
-        };
+            appId: "1:900738758923:web:d1bf99f339bdb135130a0e"
+        });
 
-        firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-
-        // DON'T use long polling - use default settings for this helper
-        // Long polling can cause issues with multiple sequential operations
-
         const logEl = document.getElementById('log');
 
-        function log(msg, type = '') {
-            const span = document.createElement('span');
-            span.className = type;
-            span.textContent = msg + '\n';
-            logEl.appendChild(span);
+        function log(msg, type) {
+            const s = document.createElement('span');
+            s.className = type || '';
+            s.textContent = msg + '\n';
+            logEl.appendChild(s);
             logEl.scrollTop = logEl.scrollHeight;
         }
 
-        function delay(ms) {
-            return new Promise(r => setTimeout(r, ms));
-        }
+        const registryData = {
+            host: {
+                name: "VIONA",
+                phone: "0165858672",
+                createdAt: "2026-02-25T20:38:00.000Z"
+            },
+            tenants: [
+                { code: "HUGA", name: "Huga Services", phone: "+60178850938", status: "Active", createdAt: "2026-02-19T00:00:00.000Z" },
+                { code: "VIONA", name: "VIONA", phone: "+60165858672", status: "Active", createdAt: "2026-02-25T00:00:00.000Z" },
+                { code: "JUDY", name: "Judy transport", phone: "+60169071675", status: "Active", createdAt: "2026-02-25T00:00:00.000Z" }
+            ]
+        };
 
-        // Retry a Firestore operation up to 3 times with delays
-        async function withRetry(label, operation, maxRetries = 3) {
-            for (let attempt = 1; attempt <= maxRetries; attempt++) {
-                try {
-                    const result = await operation();
-                    return result;
-                } catch (err) {
-                    log(`  ⚠️ ${label} attempt ${attempt} failed: ${err.message}`, 'error');
-                    if (attempt < maxRetries) {
-                        log(`  Retrying in 3 seconds...`, 'info');
-                        // Try to reset network before retry
-                        try {
-                            await db.disableNetwork();
-                            await delay(1000);
-                            await db.enableNetwork();
-                            await delay(2000);
-                        } catch (e) {
-                            await delay(3000);
-                        }
-                    } else {
-                        throw err;
-                    }
-                }
-            }
-        }
+        const tenantDoc = {
+            nextReceiptNumber: 1001,
+            receipts: [], clients: [], users: [],
+            petrolExpenses: [], emailHistory: [], auditLog: [],
+            _created: new Date().toISOString()
+        };
 
         async function fixAll() {
-            document.getElementById('fixBtn').disabled = true;
             logEl.innerHTML = '';
 
-            // STEP 0: Authenticate
-            log('Step 0: Authenticating...', 'info');
+            // Auth
+            log('Authenticating...', 'info');
             try {
-                const authResult = await firebase.auth().signInAnonymously();
-                log('✅ Authenticated as: ' + authResult.user.uid, 'success');
+                await firebase.auth().signInAnonymously();
+                log('✅ Auth OK', 'success');
             } catch (e) {
-                log('⚠️ Auth failed: ' + e.message, 'error');
-                log('Continuing anyway (rules allow unauthenticated access)...', 'info');
+                log('Auth error: ' + e.message, 'error');
             }
 
-            await delay(1000);
-
-            // STEP 1: Fix config/registry
-            log('\nStep 1: Writing config/registry...', 'info');
+            // Force network on
+            log('Enabling network...', 'info');
             try {
-                await withRetry('Registry write', async () => {
-                    await db.collection('config').doc('registry').set({
-                        host: {
-                            name: "VIONA",
-                            phone: "0165858672",
-                            createdAt: "2026-02-25T20:38:00.000Z"
-                        },
-                        tenants: [
-                            {
-                                code: "HUGA",
-                                name: "Huga Services",
-                                phone: "+60178850938",
-                                status: "Active",
-                                createdAt: "2026-02-19T00:00:00.000Z"
-                            },
-                            {
-                                code: "VIONA",
-                                name: "VIONA",
-                                phone: "+60165858672",
-                                status: "Active",
-                                createdAt: "2026-02-25T00:00:00.000Z"
-                            },
-                            {
-                                code: "JUDY",
-                                name: "Judy transport",
-                                phone: "+60169071675",
-                                status: "Active",
-                                createdAt: "2026-02-25T00:00:00.000Z"
-                            }
-                        ]
-                    });
+                await db.enableNetwork();
+                log('✅ Network enabled', 'success');
+            } catch (e) { }
+
+            // WRITE 1: Registry - fire and don't wait
+            log('\nWriting config/registry (fire-and-forget)...', 'info');
+            const regRef = db.collection('config').doc('registry');
+            regRef.set(registryData).then(() => {
+                log('✅ Registry write confirmed!', 'success');
+            }).catch(e => {
+                log('Registry write error: ' + e.message, 'error');
+            });
+
+            // WRITE 2: Tenant docs - fire and don't wait
+            for (const code of ['HUGA', 'VIONA', 'JUDY']) {
+                log('Writing tenants/' + code + '...', 'info');
+                db.collection('tenants').doc(code).set(
+                    Object.assign({ tenantName: code }, tenantDoc),
+                    { merge: true }
+                ).then(() => {
+                    log('✅ ' + code + ' write confirmed!', 'success');
+                }).catch(e => {
+                    log(code + ' error: ' + e.message, 'error');
                 });
-                log('✅ config/registry written with 3 tenants!', 'success');
-            } catch (e) {
-                log('❌ Failed to write registry after 3 attempts: ' + e.message, 'error');
             }
 
-            await delay(2000);
+            // Wait 8 seconds then verify by reading
+            log('\n⏳ Waiting 8 seconds then verifying...', 'info');
+            await new Promise(r => setTimeout(r, 8000));
 
-            // STEP 2: Create tenant documents one at a time with delays
-            log('\nStep 2: Creating tenant documents...', 'info');
-            const tenants = [
-                { code: 'HUGA', name: 'HUGA' },
-                { code: 'VIONA', name: 'VIONA' },
-                { code: 'JUDY', name: 'JUDY' }
-            ];
-
-            for (const tenant of tenants) {
-                log(`\nProcessing ${tenant.code}...`, 'info');
-                await delay(1500); // Wait between each operation
-
-                try {
-                    await withRetry(`${tenant.code} write`, async () => {
-                        await db.collection('tenants').doc(tenant.code).set({
-                            tenantName: tenant.name,
-                            nextReceiptNumber: 1001,
-                            receipts: [],
-                            clients: [],
-                            users: [],
-                            petrolExpenses: [],
-                            emailHistory: [],
-                            auditLog: [],
-                            _created: new Date().toISOString()
-                        }, { merge: true }); // merge:true so we don't overwrite existing data
-                    });
-                    log(`✅ tenants/${tenant.code} ready!`, 'success');
-                } catch (e) {
-                    log(`❌ Failed for ${tenant.code} after 3 attempts: ${e.message}`, 'error');
-                }
-            }
-
-            // STEP 3: Verify
-            log('\n\nStep 3: Verifying...', 'info');
-            await delay(2000);
-
+            log('\nVerifying registry...', 'info');
             try {
-                const reg = await db.collection('config').doc('registry').get({ source: 'server' });
-                if (reg.exists && reg.data().tenants && reg.data().tenants.length === 3) {
-                    log('✅ Registry verified: ' + reg.data().tenants.length + ' tenants', 'success');
-                } else {
-                    log('⚠️ Registry check: ' + (reg.exists ? 'exists but may be incomplete' : 'missing'), 'error');
+                const snap = await Promise.race([
+                    regRef.get({ source: 'server' }),
+                    new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 5000))
+                ]);
+                if (snap.exists) {
+                    const d = snap.data();
+                    const tenantCount = d.tenants ? d.tenants.length : 0;
+                    if (tenantCount === 3) {
+                        log('✅ Registry verified! ' + tenantCount + ' tenants found!', 'success');
+                        log('Tenants: ' + d.tenants.map(t => t.code).join(', '), 'success');
+                    } else {
+                        log('⚠️ Registry has ' + tenantCount + ' tenants (expected 3)', 'error');
+                        log('Data: ' + JSON.stringify(d.tenants), 'info');
+                    }
                 }
             } catch (e) {
-                log('⚠️ Verification skipped (offline), but writes were queued', 'info');
+                log('Verify failed: ' + e.message, 'info');
+                log('The writes may still be pending. Check Firebase Console.', 'info');
             }
 
-            log('\n🎉 ALL DONE!', 'success');
-            log('Now go test your login in Incognito mode!', 'info');
-            log('You can close this page.', 'info');
-            document.getElementById('fixBtn').disabled = false;
+            log('\n🎉 Done! Check Firebase Console to confirm.', 'success');
         }
     </script>
 </body>
