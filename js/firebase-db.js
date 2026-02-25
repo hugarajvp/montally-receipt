@@ -152,7 +152,7 @@ async function initFirebase() {
 
         window.firebaseReady = true;
         window._firebaseOnline = isOnline;
-        console.log('[TransitPay] Firebase initialized ✅ (online:', isOnline, ', incognito:', incognito, ')');
+        console.log('[TransitPay] Firebase initialized ✅ (online:', isOnline, ')');
 
     } catch (err) {
         console.warn('[TransitPay] Firebase init failed, using localStorage fallback:', err);
