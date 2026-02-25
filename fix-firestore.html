@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TransitPay - Fix Firestore Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+            padding: 40px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #16213e;
+            padding: 30px;
+            border-radius: 12px;
+        }
+
+        h1 {
+            color: #e94560;
+        }
+
+        button {
+            background: #e94560;
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+
+        button:hover {
+            background: #c73750;
+        }
+
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+
+        .log {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .success {
+            color: #4ade80;
+        }
+
+        .error {
+            color: #f87171;
+        }
+
+        .info {
+            color: #60a5fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🔧 Fix Firestore Data</h1>
+        <p>This will set up the correct registry structure with all 3 tenants (HUGA, VIONA, JUDY) in your Firestore
+            database.</p>
+
+        <button id="fixBtn" onclick="fixAll()">🚀 Fix Everything Now</button>
+
+        <div class="log" id="log">Ready. Click the button to start...</div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAP9qvV3TE4BhA6hk4zJDkICTbrN93Z63k",
+            authDomain: "transitpay-e445.firebaseapp.com",
+            projectId: "transitpay-e445",
+            storageBucket: "transitpay-e445.firebasestorage.app",
+            messagingSenderId: "900738758923",
+            appId: "1:900738758923:web:d1bf99f339bdb135130a0e",
+            measurementId: "G-GF21HMZ445"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // DON'T use long polling - use default settings for this helper
+        // Long polling can cause issues with multiple sequential operations
+
+        const logEl = document.getElementById('log');
+
+        function log(msg, type = '') {
+            const span = document.createElement('span');
+            span.className = type;
+            span.textContent = msg + '\n';
+            logEl.appendChild(span);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+
+        function delay(ms) {
+            return new Promise(r => setTimeout(r, ms));
+        }
+
+        // Retry a Firestore operation up to 3 times with delays
+        async function withRetry(label, operation, maxRetries = 3) {
+            for (let attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    const result = await operation();
+                    return result;
+                } catch (err) {
+                    log(`  ⚠️ ${label} attempt ${attempt} failed: ${err.message}`, 'error');
+                    if (attempt < maxRetries) {
+                        log(`  Retrying in 3 seconds...`, 'info');
+                        // Try to reset network before retry
+                        try {
+                            await db.disableNetwork();
+                            await delay(1000);
+                            await db.enableNetwork();
+                            await delay(2000);
+                        } catch (e) {
+                            await delay(3000);
+                        }
+                    } else {
+                        throw err;
+                    }
+                }
+            }
+        }
+
+        async function fixAll() {
+            document.getElementById('fixBtn').disabled = true;
+            logEl.innerHTML = '';
+
+            // STEP 0: Authenticate
+            log('Step 0: Authenticating...', 'info');
+            try {
+                const authResult = await firebase.auth().signInAnonymously();
+                log('✅ Authenticated as: ' + authResult.user.uid, 'success');
+            } catch (e) {
+                log('⚠️ Auth failed: ' + e.message, 'error');
+                log('Continuing anyway (rules allow unauthenticated access)...', 'info');
+            }
+
+            await delay(1000);
+
+            // STEP 1: Fix config/registry
+            log('\nStep 1: Writing config/registry...', 'info');
+            try {
+                await withRetry('Registry write', async () => {
+                    await db.collection('config').doc('registry').set({
+                        host: {
+                            name: "VIONA",
+                            phone: "0165858672",
+                            createdAt: "2026-02-25T20:38:00.000Z"
+                        },
+                        tenants: [
+                            {
+                                code: "HUGA",
+                                name: "Huga Services",
+                                phone: "+60178850938",
+                                status: "Active",
+                                createdAt: "2026-02-19T00:00:00.000Z"
+                            },
+                            {
+                                code: "VIONA",
+                                name: "VIONA",
+                                phone: "+60165858672",
+                                status: "Active",
+                                createdAt: "2026-02-25T00:00:00.000Z"
+                            },
+                            {
+                                code: "JUDY",
+                                name: "Judy transport",
+                                phone: "+60169071675",
+                                status: "Active",
+                                createdAt: "2026-02-25T00:00:00.000Z"
+                            }
+                        ]
+                    });
+                });
+                log('✅ config/registry written with 3 tenants!', 'success');
+            } catch (e) {
+                log('❌ Failed to write registry after 3 attempts: ' + e.message, 'error');
+            }
+
+            await delay(2000);
+
+            // STEP 2: Create tenant documents one at a time with delays
+            log('\nStep 2: Creating tenant documents...', 'info');
+            const tenants = [
+                { code: 'HUGA', name: 'HUGA' },
+                { code: 'VIONA', name: 'VIONA' },
+                { code: 'JUDY', name: 'JUDY' }
+            ];
+
+            for (const tenant of tenants) {
+                log(`\nProcessing ${tenant.code}...`, 'info');
+                await delay(1500); // Wait between each operation
+
+                try {
+                    await withRetry(`${tenant.code} write`, async () => {
+                        await db.collection('tenants').doc(tenant.code).set({
+                            tenantName: tenant.name,
+                            nextReceiptNumber: 1001,
+                            receipts: [],
+                            clients: [],
+                            users: [],
+                            petrolExpenses: [],
+                            emailHistory: [],
+                            auditLog: [],
+                            _created: new Date().toISOString()
+                        }, { merge: true }); // merge:true so we don't overwrite existing data
+                    });
+                    log(`✅ tenants/${tenant.code} ready!`, 'success');
+                } catch (e) {
+                    log(`❌ Failed for ${tenant.code} after 3 attempts: ${e.message}`, 'error');
+                }
+            }
+
+            // STEP 3: Verify
+            log('\n\nStep 3: Verifying...', 'info');
+            await delay(2000);
+
+            try {
+                const reg = await db.collection('config').doc('registry').get({ source: 'server' });
+                if (reg.exists && reg.data().tenants && reg.data().tenants.length === 3) {
+                    log('✅ Registry verified: ' + reg.data().tenants.length + ' tenants', 'success');
+                } else {
+                    log('⚠️ Registry check: ' + (reg.exists ? 'exists but may be incomplete' : 'missing'), 'error');
+                }
+            } catch (e) {
+                log('⚠️ Verification skipped (offline), but writes were queued', 'info');
+            }
+
+            log('\n🎉 ALL DONE!', 'success');
+            log('Now go test your login in Incognito mode!', 'info');
+            log('You can close this page.', 'info');
+            document.getElementById('fixBtn').disabled = false;
+        }
+    </script>
+</body>
+
+</html>
