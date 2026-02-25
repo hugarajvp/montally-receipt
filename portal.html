@@ -336,6 +336,15 @@
                     </svg>
                     <span>Data Import</span>
                 </li>
+                <li class="menu-item" data-page="auditLog" onclick="navigateTo('auditLog')" id="menuAuditLog">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M4 3h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"
+                            stroke="currentColor" stroke-width="1.5" />
+                        <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" />
+                    </svg>
+                    <span>Audit Log</span>
+                </li>
             </ul>
             <div class="sidebar-footer">
                 <div class="user-info" id="userInfo">
@@ -1415,6 +1424,99 @@ TransitPay Team</textarea>
                 </div>
             </section>
 
+            <!-- ===== AUDIT LOG ===== -->
+            <section id="auditLogSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Audit Log</h2>
+                        <p class="section-desc">Track all actions and changes in the system</p>
+                    </div>
+                    <div class="header-actions" style="display:flex;gap:0.5rem;">
+                        <button class="btn btn-outline" onclick="exportAuditLog()" style="font-size:0.8rem;">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 10v3h10v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                                <path d="M8 2v7M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.5"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Export CSV
+                        </button>
+                        <button class="btn btn-ghost" onclick="clearAuditLog()"
+                            style="font-size:0.8rem;color:var(--text-muted);">
+                            Clear Log
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="receipt-form-card" style="margin-bottom:1.5rem;padding:1rem 1.25rem;">
+                    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;">
+                        <div class="form-group" style="margin:0;min-width:140px;">
+                            <label style="font-size:0.75rem;margin-bottom:0.3rem;">Module</label>
+                            <select id="auditFilterModule" onchange="loadAuditLog()" class="select-input"
+                                style="font-size:0.8rem;height:34px;">
+                                <option value="all">All Modules</option>
+                                <option value="receipt">Receipts</option>
+                                <option value="client">Clients</option>
+                                <option value="petrol">Petrol</option>
+                                <option value="user">Users</option>
+                                <option value="tenant">Tenants</option>
+                                <option value="settings">Settings</option>
+                                <option value="auth">Authentication</option>
+                                <option value="import">Data Import</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;min-width:140px;">
+                            <label style="font-size:0.75rem;margin-bottom:0.3rem;">Action</label>
+                            <select id="auditFilterAction" onchange="loadAuditLog()" class="select-input"
+                                style="font-size:0.8rem;height:34px;">
+                                <option value="all">All Actions</option>
+                                <option value="created">Created</option>
+                                <option value="updated">Updated</option>
+                                <option value="deleted">Deleted</option>
+                                <option value="imported">Imported</option>
+                                <option value="login">Login</option>
+                                <option value="logout">Logout</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;flex:1;min-width:180px;">
+                            <label style="font-size:0.75rem;margin-bottom:0.3rem;">Search</label>
+                            <input type="text" id="auditSearch" placeholder="Search descriptions..."
+                                oninput="loadAuditLog()" style="font-size:0.8rem;height:34px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Log Table -->
+                <div class="table-card">
+                    <div class="chart-header">
+                        <h3>Activity Log (<span id="auditLogCount">0</span> entries)</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="auditLogTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:120px;">Time</th>
+                                    <th style="width:90px;">Action</th>
+                                    <th style="width:110px;">Module</th>
+                                    <th>Description</th>
+                                    <th style="width:130px;">User</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditLogBody">
+                                <tr class="empty-row">
+                                    <td colspan="5">
+                                        <div class="empty-state-mini">
+                                            <p>No audit log entries yet. Actions will be recorded automatically.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
             <!-- ==================== TENANT MANAGEMENT (HOST ONLY) ==================== -->
             <section id="tenantsSection" class="content-section">
                 <div class="section-header">
@@ -1578,6 +1680,7 @@ TransitPay Team</textarea>
     <script src="js/petrol.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/email.js"></script>
+    <script src="js/audit-log.js"></script>
     <script src="js/data-import.js"></script>
     <!-- Portal Authentication Logic -->
     <script src="js/auth.js"></script>

@@ -518,6 +518,7 @@ async function saveTenant(e) {
             }
 
             showToast('Tenant updated successfully!', 'success');
+            if (typeof addAuditLog === 'function') addAuditLog('updated', 'tenant', `Updated tenant: ${name} (${code})`, { id: editingId });
         }
     } else {
         // Check for duplicate code
@@ -557,11 +558,13 @@ async function saveTenant(e) {
                 ],
                 carPlates: ['BEP 813'],
                 emailHistory: [],
+                auditLog: [],
                 nextReceiptNumber: 1001
             }));
         }
 
         showToast(`Tenant "${name}" created with code: ${code}`, 'success');
+        if (typeof addAuditLog === 'function') addAuditLog('created', 'tenant', `Created tenant: ${name} (Code: ${code})`, { id: tenant.id });
     }
 
     saveRegistry(registry);

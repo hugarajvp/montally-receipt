@@ -29,6 +29,7 @@ function saveUser(e) {
                 updatedAt: new Date().toISOString()
             };
             showToast('User updated successfully!', 'success');
+            if (typeof addAuditLog === 'function') addAuditLog('updated', 'user', `Updated user: ${name} (${role})`, { id: editingId });
         }
     } else {
         // Check for duplicate phone
@@ -50,6 +51,7 @@ function saveUser(e) {
         };
         appData.users.push(user);
         showToast('User account created!', 'success');
+        if (typeof addAuditLog === 'function') addAuditLog('created', 'user', `Created user: ${name} (${role})`, { id: user.id });
     }
 
     saveAppData(appData);
@@ -104,6 +106,7 @@ function deleteUser(userId) {
         return;
     }
 
+    if (typeof addAuditLog === 'function') addAuditLog('deleted', 'user', `Deleted user: ${user.name} (${user.role})`, { id: userId });
     appData.users = appData.users.filter(u => u.id !== userId);
     saveAppData(appData);
     loadUsers();

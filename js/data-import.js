@@ -288,6 +288,7 @@ function confirmImport() {
         });
     }
 
+    if (typeof addAuditLog === 'function') addAuditLog('imported', 'import', `Imported ${importedData.length} ${type === 'receipts' ? 'receipt' : 'petrol expense'} records via CSV`, { count: importedData.length });
     saveAppData(appData);
 
     // Refresh ALL relevant sections based on import type

@@ -158,6 +158,7 @@ function generateReceipt(e) {
     // Save receipt
     appData.receipts.push(receipt);
     appData.nextReceiptNumber++;
+    if (typeof addAuditLog === 'function') addAuditLog('created', 'receipt', `Receipt ${receipt.id} for ${clientName} — RM ${receipt.total.toFixed(2)}`, { id: receipt.id, amount: receipt.total });
     saveAppData(appData);
 
     // Refresh dashboard so grand total & charts update immediately

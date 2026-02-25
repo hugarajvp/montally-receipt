@@ -171,6 +171,7 @@ function savePetrolExpense(e) {
                 updatedAt: new Date().toISOString()
             };
             showToast('Petrol expense updated!', 'success');
+            if (typeof addAuditLog === 'function') addAuditLog('updated', 'petrol', `Updated petrol expense: RM ${amount.toFixed(2)} on ${date} (${carPlate})`, { id: editingId, amount: amount });
         }
     } else {
         const expense = {
@@ -182,6 +183,7 @@ function savePetrolExpense(e) {
         };
         appData.petrolExpenses.push(expense);
         showToast('Petrol expense logged!', 'success');
+        if (typeof addAuditLog === 'function') addAuditLog('created', 'petrol', `Petrol expense: RM ${amount.toFixed(2)} on ${date} (${carPlate})`, { id: expense.id, amount: amount });
     }
 
     saveAppData(appData);
@@ -231,6 +233,8 @@ function editPetrolExpense(expenseId) {
 
 function deletePetrolExpense(expenseId) {
     if (!confirm('Delete this petrol expense?')) return;
+    const expense = appData.petrolExpenses.find(p => p.id === expenseId);
+    if (expense && typeof addAuditLog === 'function') addAuditLog('deleted', 'petrol', `Deleted petrol expense: RM ${expense.amount.toFixed(2)} on ${expense.date}`, { id: expenseId, amount: expense.amount });
     appData.petrolExpenses = appData.petrolExpenses.filter(p => p.id !== expenseId);
     saveAppData(appData);
     loadPetrolExpenses();

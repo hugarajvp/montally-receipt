@@ -31,6 +31,7 @@ function addCarPlate() {
     renderCarPlateTags();
     populateCarPlateDropdown();
     showToast('Car plate added: ' + val, 'success');
+    if (typeof addAuditLog === 'function') addAuditLog('created', 'settings', `Added car plate: ${val}`);
 }
 
 function removeCarPlate(plate) {
@@ -40,6 +41,7 @@ function removeCarPlate(plate) {
     renderCarPlateTags();
     populateCarPlateDropdown();
     showToast('Car plate removed', 'success');
+    if (typeof addAuditLog === 'function') addAuditLog('deleted', 'settings', `Removed car plate: ${plate}`);
 }
 
 function renderCarPlateTags() {
@@ -73,6 +75,7 @@ function addLocation() {
     renderLocationTags();
     populateLocationDropdowns();
     showToast('Location added: ' + val, 'success');
+    if (typeof addAuditLog === 'function') addAuditLog('created', 'settings', `Added location: ${val}`);
 }
 
 function removeLocation(loc) {
@@ -82,6 +85,7 @@ function removeLocation(loc) {
     renderLocationTags();
     populateLocationDropdowns();
     showToast('Location removed', 'success');
+    if (typeof addAuditLog === 'function') addAuditLog('deleted', 'settings', `Removed location: ${loc}`);
 }
 
 function renderLocationTags() {

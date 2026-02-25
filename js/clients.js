@@ -30,6 +30,7 @@ function saveClient(e) {
                 updatedAt: new Date().toISOString()
             };
             showToast('Client updated successfully!', 'success');
+            if (typeof addAuditLog === 'function') addAuditLog('updated', 'client', `Updated client: ${name} (${phone})`, { id: editingId });
         }
     } else {
         // Check for duplicate phone
@@ -48,6 +49,7 @@ function saveClient(e) {
         };
         appData.clients.push(client);
         showToast('Client added successfully!', 'success');
+        if (typeof addAuditLog === 'function') addAuditLog('created', 'client', `Added client: ${name} (${phone})`, { id: client.id });
     }
 
     saveAppData(appData);
@@ -97,7 +99,10 @@ function editClient(clientId) {
 function deleteClient(clientId) {
     if (!confirm('Are you sure you want to delete this client?')) return;
 
+    const client = appData.clients.find(c => c.id === clientId);
+    const clientName = client ? client.name : clientId;
     appData.clients = appData.clients.filter(c => c.id !== clientId);
+    if (typeof addAuditLog === 'function') addAuditLog('deleted', 'client', `Deleted client: ${clientName}`, { id: clientId });
     saveAppData(appData);
     loadClients();
     populateClientDropdown();

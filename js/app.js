@@ -31,6 +31,7 @@ function getAppData() {
         ];
         if (!parsed.carPlates) parsed.carPlates = ['BPE813', 'SMN1538'];
         if (!parsed.emailHistory) parsed.emailHistory = [];
+        if (!parsed.auditLog) parsed.auditLog = [];
         return parsed;
     }
     return {
@@ -47,6 +48,7 @@ function getAppData() {
         ],
         carPlates: ['BPE813', 'SMN1538'],
         emailHistory: [],
+        auditLog: [],
         nextReceiptNumber: 1001
     };
 }
@@ -168,6 +170,7 @@ function handleLogin(e) {
 }
 
 function handleLogout() {
+    if (typeof addAuditLog === 'function') addAuditLog('logout', 'auth', `User logged out: ${appData.user ? (appData.user.name || 'Unknown') : 'Unknown'}`);
     appData.user = null;
     saveAppData(appData);
 
@@ -215,6 +218,10 @@ function showApp() {
 
     // Update menu visibility based on role
     updateMenuVisibility();
+
+    // Log login event
+    if (typeof addAuditLog === 'function') addAuditLog('login', 'auth', `User logged in: ${userName} (${userRole})`);
+    saveAppData(appData);
 
     // CRITICAL: Fetch cloud data FIRST, then render dashboard
     const tenantCode = window._ACTIVE_TENANT_CODE || 'HOST';
@@ -303,6 +310,7 @@ function navigateTo(page) {
     if (page === 'email') { populateInvoiceClients(); loadEmailHistory(); }
     if (page === 'settings') { renderLocationTags(); renderCarPlateTags(); }
     if (page === 'tenants') { loadTenants(); }
+    if (page === 'auditLog') { loadAuditLog(); }
 }
 
 function toggleSidebar() {
