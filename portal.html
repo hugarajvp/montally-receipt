@@ -396,7 +396,8 @@
 
                 <!-- Stats Cards -->
                 <div class="stats-grid">
-                    <div class="stat-card stat-card-primary" id="statTotalEarnings">
+                    <div class="stat-card stat-card-primary" id="statTotalEarnings" onclick="navigateTo('receipts')"
+                        style="cursor:pointer;" title="View Receipts">
                         <div class="stat-icon">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                                 <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor"
@@ -409,7 +410,8 @@
                             <span class="stat-change positive" id="earningsChange">+0%</span>
                         </div>
                     </div>
-                    <div class="stat-card stat-card-success" id="statTotalTrips">
+                    <div class="stat-card stat-card-success" id="statTotalTrips" onclick="navigateTo('trips')"
+                        style="cursor:pointer;" title="View Trips">
                         <div class="stat-icon">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                                 <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2"
@@ -422,7 +424,8 @@
                             <span class="stat-change positive" id="tripsChange">+0%</span>
                         </div>
                     </div>
-                    <div class="stat-card stat-card-warning" id="statMonthlyClients">
+                    <div class="stat-card stat-card-warning" id="statMonthlyClients" onclick="navigateTo('clients')"
+                        style="cursor:pointer;" title="View Clients">
                         <div class="stat-icon">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                                 <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2"
@@ -438,7 +441,8 @@
                             <span class="stat-change positive" id="clientsChange">+0%</span>
                         </div>
                     </div>
-                    <div class="stat-card stat-card-info" id="statReceiptsGenerated">
+                    <div class="stat-card stat-card-info" id="statReceiptsGenerated" onclick="navigateTo('receipts')"
+                        style="cursor:pointer;" title="View Receipts">
                         <div class="stat-icon">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor"
@@ -453,7 +457,8 @@
                             <span class="stat-change positive" id="receiptsChange">+0%</span>
                         </div>
                     </div>
-                    <div class="stat-card" style="border-left: 3px solid #f59e0b;" id="statPetrolSpend">
+                    <div class="stat-card" style="border-left: 3px solid #f59e0b;cursor:pointer;" id="statPetrolSpend"
+                        onclick="navigateTo('petrol')" title="View Petrol Expenses">
                         <div class="stat-icon" style="color:#f59e0b;">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
                                 <path d="M4 20V8a2 2 0 012-2h7a2 2 0 012 2v12" stroke="currentColor" stroke-width="2"
@@ -988,29 +993,6 @@
                         <div class="form-group" style="margin-top:1rem;">
                             <label for="petrolNotes">Notes</label>
                             <input type="text" id="petrolNotes" placeholder="Additional notes (optional)">
-                        </div>
-                        <!-- File Upload -->
-                        <div class="form-group" style="margin-top:1rem;">
-                            <label>Upload Receipt (PDF, JPEG, PNG)</label>
-                            <div class="file-upload-area" id="petrolDropZone">
-                                <input type="file" id="petrolFileInput" accept=".pdf,.jpg,.jpeg,.png,.webp,.heic"
-                                    onchange="handlePetrolFileSelect(event)" style="display:none;">
-                                <div class="file-upload-content"
-                                    onclick="document.getElementById('petrolFileInput').click()">
-                                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
-                                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
-                                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
-                                            stroke-linejoin="round" />
-                                        <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.5"
-                                            stroke-linecap="round" stroke-linejoin="round" />
-                                        <path d="M12 18v-6M9 15l3-3 3 3" stroke="currentColor" stroke-width="1.5"
-                                            stroke-linecap="round" stroke-linejoin="round" />
-                                    </svg>
-                                    <p>Click to upload or drag &amp; drop</p>
-                                    <span>PDF, JPEG, PNG, WebP (max 5MB)</span>
-                                </div>
-                                <div class="file-preview" id="petrolFilePreview" style="display:none;"></div>
-                            </div>
                         </div>
                         <input type="hidden" id="editingPetrolId" value="">
                         <div class="form-actions">
