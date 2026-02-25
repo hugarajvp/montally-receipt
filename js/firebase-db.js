@@ -65,8 +65,9 @@ async function resetFirestoreNetwork() {
     try {
         console.log('[TransitPay] Resetting Firestore network connection...');
         await db.disableNetwork();
-        await new Promise(r => setTimeout(r, 500)); // Brief pause
+        await new Promise(r => setTimeout(r, 2000)); // Longer pause to let connections clear
         await db.enableNetwork();
+        await new Promise(r => setTimeout(r, 1000)); // Wait for reconnection
         console.log('[TransitPay] Network reset complete ✅');
         return true;
     } catch (err) {
@@ -88,29 +89,11 @@ async function initFirebase() {
             useFetchStreams: false
         });
 
-        // STEP 1: Check if Incognito mode
-        const incognito = await isIncognitoMode();
-        window._isIncognito = incognito;
-        if (incognito) {
-            console.log('[TransitPay] Incognito/Private mode detected — skipping persistence');
-        }
-
-        // STEP 2: Try persistence ONLY if NOT in Incognito
-        // Persistence in Incognito causes Firestore to get stuck in "offline" mode
-        if (!incognito) {
-            try {
-                await db.enablePersistence({ synchronizeTabs: false });
-                console.log('[TransitPay] Persistence enabled ✅');
-            } catch (persistErr) {
-                if (persistErr.code === 'failed-precondition') {
-                    console.warn('[TransitPay] Persistence: Multiple tabs open (OK)');
-                } else if (persistErr.code === 'unimplemented') {
-                    console.warn('[TransitPay] Persistence: Not supported in this browser (OK)');
-                } else {
-                    console.warn('[TransitPay] Persistence failed:', persistErr.message, '(continuing without it)');
-                }
-            }
-        }
+        // STEP 1: Skip IndexedDB persistence entirely.
+        // Persistence causes Firestore to get stuck in "offline" mode in Incognito
+        // and is unreliable across browsers. The app uses localStorage as its cache.
+        window._isIncognito = false; // Not needed anymore
+        console.log('[TransitPay] Persistence skipped (using localStorage cache instead)');
 
         // STEP 3: AWAIT anonymous auth - this is CRITICAL
         if (firebase.auth) {
