@@ -27,6 +27,17 @@ function injectKnownTenants() {
         if (!registry.tenants) registry.tenants = [];
 
         let changed = false;
+
+        // Inject known host if missing or still at default placeholder
+        const DEFAULT_PHONE = '+60123456789';
+        const hostPhone = registry.host && registry.host.phone;
+        if (!hostPhone || hostPhone === DEFAULT_PHONE) {
+            registry.host = { name: 'VIONA', phone: '0165858672', createdAt: '2026-02-25T20:38:00.000Z' };
+            changed = true;
+            console.log('[Portal] Injected fallback host data');
+        }
+
+        // Inject known tenants if missing
         for (const kt of KNOWN_TENANTS) {
             const exists = registry.tenants.find(t => (t.code || '').toUpperCase() === kt.code);
             if (!exists) {
@@ -37,7 +48,7 @@ function injectKnownTenants() {
         }
         if (changed) {
             localStorage.setItem(PORTAL_REGISTRY_KEY, JSON.stringify(registry));
-            console.log('[Portal] Fallback tenants saved to localStorage ✅');
+            console.log('[Portal] Fallback data saved to localStorage ✅');
         }
     } catch (e) {
         console.warn('[Portal] Could not inject known tenants:', e.message);
