@@ -94,22 +94,30 @@ setTimeout(() => {
 
 function downloadSampleCSV() {
     const type = document.getElementById('importType').value;
-    let csv;
+    let csv, filename;
     if (type === 'receipts') {
         csv = 'date,clientName,clientPhone,clientAddress,type,amount,route,paymentStatus,notes\n';
         csv += '2025-01-15,Ahmad bin Ali,+60123456789,Jalan Sultan,monthly,500.00,KL to Shah Alam,Paid,January payment\n';
         csv += '2025-01-20,Siti Aminah,+60129876543,Taman Melawati,trip,35.00,Ampang to KLIA,Pending,Airport trip\n';
+        filename = 'sample_receipts.csv';
+    } else if (type === 'grocery') {
+        csv = 'date,item,amount,payment\n';
+        csv += '2025-01-10,Rice,25.50,Visa\n';
+        csv += '2025-01-12,Chicken,18.90,Cash\n';
+        csv += '2025-01-15,Vegetables,12.00,Aremex\n';
+        filename = 'sample_grocery.csv';
     } else {
         csv = 'date,amount,liters,carPlate,notes\n';
         csv += '2025-01-10,120.00,38.5,BPE813,Full tank\n';
         csv += '2025-01-18,85.50,27.2,SMN1538,Half tank\n';
+        filename = 'sample_petrol.csv';
     }
 
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = type === 'receipts' ? 'sample_receipts.csv' : 'sample_petrol.csv';
+    a.download = filename;
     a.click();
     URL.revokeObjectURL(url);
     showToast('Sample CSV downloaded', 'success');
@@ -168,6 +176,14 @@ function parseCSV(csv, type) {
                 paymentStatus: row.paymentStatus || row.paymentMethod || 'Paid',
                 notes: row.notes || ''
             });
+        } else if (type === 'grocery') {
+            data.push({
+                date: row.date || '',
+                item: row.item || 'Grocery',
+                amount: parseFloat(row.amount) || 0,
+                payment: row.payment || 'Cash',
+                notes: ''
+            });
         } else {
             data.push({
                 date: row.date || '',
@@ -214,21 +230,36 @@ function showImportPreview(data, type) {
                 </tbody>
             </table>
         `;
+    } else if (type === 'grocery') {
+        tableHtml = `
+            <table class="import-preview-table">
+                <thead><tr><th>Date</th><th>Item</th><th>Amount</th><th>Payment</th></tr></thead>
+                <tbody>
+                    ${data.slice(0, 10).map(r => `
+                        <tr>
+                            <td>${r.date}</td>
+                            <td>${r.item}</td>
+                            <td>RM ${r.amount.toFixed(2)}</td>
+                            <td>${r.payment}</td>
+                        </tr>
+                    `).join('')}
+                    ${data.length > 10 ? `<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">... and ${data.length - 10} more records</td></tr>` : ''}
+                </tbody>
+            </table>
+        `;
     } else {
         tableHtml = `
             <table class="import-preview-table">
-                <thead><tr><th>Date</th><th>Amount</th><th>Liters</th><th>Car Plate</th><th>Notes</th></tr></thead>
+                <thead><tr><th>Date</th><th>Amount</th><th>Notes</th></tr></thead>
                 <tbody>
                     ${data.slice(0, 10).map(r => `
                         <tr>
                             <td>${r.date}</td>
                             <td>RM ${r.amount.toFixed(2)}</td>
-                            <td>${r.liters ? r.liters.toFixed(1) + 'L' : '\u2014'}</td>
-                            <td>${r.carPlate}</td>
                             <td>${r.notes}</td>
                         </tr>
                     `).join('')}
-                    ${data.length > 10 ? `<tr><td colspan="5" style="text-align:center;color:var(--text-muted);">... and ${data.length - 10} more records</td></tr>` : ''}
+                    ${data.length > 10 ? `<tr><td colspan="3" style="text-align:center;color:var(--text-muted);">... and ${data.length - 10} more records</td></tr>` : ''}
                 </tbody>
             </table>
         `;
@@ -245,7 +276,7 @@ function confirmImport() {
 
     const type = document.getElementById('importType').value;
 
-    if (!confirm(`Are you sure you want to import ${importedData.length} ${type === 'receipts' ? 'receipt' : 'petrol expense'} records?`)) {
+    if (!confirm(`Are you sure you want to import ${importedData.length} ${type} records?`)) {
         return;
     }
 
@@ -270,6 +301,20 @@ function confirmImport() {
             };
             appData.receipts.push(receipt);
         });
+    } else if (type === 'grocery') {
+        if (!appData.groceries) appData.groceries = [];
+        importedData.forEach(row => {
+            appData.groceries.push({
+                id: 'GRC-' + Date.now() + '-' + Math.random().toString(36).substr(2, 5),
+                date: row.date,
+                item: row.item || 'Grocery',
+                amount: row.amount,
+                payment: row.payment || 'Cash',
+                notes: '',
+                createdAt: new Date().toISOString(),
+                imported: true
+            });
+        });
     } else {
         importedData.forEach(row => {
             const expense = {
@@ -288,10 +333,8 @@ function confirmImport() {
         });
     }
 
-    if (typeof addAuditLog === 'function') addAuditLog('imported', 'import', `Imported ${importedData.length} ${type === 'receipts' ? 'receipt' : 'petrol expense'} records via CSV`, { count: importedData.length });
+    if (typeof addAuditLog === 'function') addAuditLog('imported', 'import', `Imported ${importedData.length} ${type} records via CSV`, { count: importedData.length });
     saveAppData(appData);
-
-    // Refresh ALL relevant sections based on import type
     updateDashboard();
 
     if (type === 'receipts') {
@@ -299,19 +342,18 @@ function confirmImport() {
         if (typeof loadTrips === 'function') loadTrips();
         if (typeof loadClients === 'function') loadClients();
         if (typeof populateClientDropdown === 'function') populateClientDropdown();
+    } else if (type === 'grocery') {
+        if (typeof loadGroceries === 'function') loadGroceries();
     } else {
-        // CRITICAL: Refresh petrol section after petrol import
         if (typeof loadPetrolExpenses === 'function') loadPetrolExpenses();
         if (typeof updatePetrolDashboard === 'function') updatePetrolDashboard();
     }
 
     const importCount = importedData.length;
-
-    // Reset UI
     importedData = null;
     document.getElementById('importPreview').style.display = 'none';
     document.getElementById('confirmImportBtn').style.display = 'none';
     document.getElementById('importFileInput').value = '';
 
-    showToast(`Successfully imported ${importCount} ${type === 'receipts' ? 'receipt' : 'petrol expense'} records!`, 'success');
+    showToast(`Successfully imported ${importCount} ${type} records!`, 'success');
 }

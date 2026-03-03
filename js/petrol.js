@@ -288,7 +288,7 @@ function loadPetrolExpenses() {
     if (expenses.length === 0) {
         tbody.innerHTML = `
             <tr class="empty-row">
-                <td colspan="6">
+                <td colspan="4">
                     <div class="empty-state-mini">
                         <p>No petrol expenses${filterMonth !== 'all' ? ' for this period' : ''}.</p>
                     </div>
@@ -302,8 +302,6 @@ function loadPetrolExpenses() {
         <tr>
             <td>${formatDate(p.date)}</td>
             <td style="font-family:var(--font-mono);font-weight:600;">RM ${p.amount.toFixed(2)}</td>
-            <td>${p.liters ? p.liters.toFixed(1) + 'L' : '<span style="color:var(--text-muted);">â€”</span>'}</td>
-            <td><span style="font-family:var(--font-mono);font-weight:600;color:var(--text-accent);">${p.carPlate || p.vehicle || 'â€”'}</span></td>
             <td>${p.receipt ? '<button class="btn-view-file" onclick="viewPetrolReceipt(\'' + p.id + '\')">View</button>' : '<span style="color:var(--text-muted);">â€”</span>'}</td>
             <td>
                 <div class="action-btn-group">
