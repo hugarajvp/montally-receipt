@@ -490,6 +490,22 @@
                             <span class="stat-change positive" id="petrolChange">+0%</span>
                         </div>
                     </div>
+                    <div class="stat-card" style="border-left: 3px solid #34d399;cursor:pointer;" id="statGrocerySpend"
+                        onclick="navigateTo('grocery')" title="View Grocery Expenses">
+                        <div class="stat-icon" style="color:#34d399;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M3 3h2l3 11h11l2-8H8" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                                <circle cx="10" cy="20" r="1.5" stroke="currentColor" stroke-width="2" />
+                                <circle cx="19" cy="20" r="1.5" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Grocery This Month</span>
+                            <span class="stat-value" id="dashGroceryVal">RM 0.00</span>
+                            <span class="stat-change positive" id="groceryChange">+0%</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Charts Row -->
@@ -1004,10 +1020,8 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="form-group" style="margin-top:1rem;">
-                            <label for="petrolNotes">Notes</label>
-                            <input type="text" id="petrolNotes" placeholder="Additional notes (optional)">
-                        </div>
+                        <!-- Notes removed -->
+                        <input type="hidden" id="petrolNotes" value="">
                         <input type="hidden" id="editingPetrolId" value="">
                         <div class="form-actions">
                             <button type="button" class="btn btn-ghost" onclick="clearPetrolForm()">Clear</button>
@@ -1484,8 +1498,7 @@
                             </div>
                             <div class="form-group">
                                 <label for="groceryItem">Item / Description *</label>
-                                <input type="text" id="groceryItem" placeholder="e.g. Rice, Chicken, Vegetables"
-                                    required>
+                                <input type="text" id="groceryItem" placeholder="Grocery" value="Grocery" required>
                             </div>
                             <div class="form-group">
                                 <label for="groceryAmount">Amount (RM) *</label>
@@ -1513,11 +1526,8 @@
                                 </label>
                             </div>
                         </div>
-                        <!-- Notes (optional) -->
-                        <div class="form-group" style="margin-top:0.75rem;">
-                            <label for="groceryNotes">Notes (optional)</label>
-                            <input type="text" id="groceryNotes" placeholder="e.g. Expired soon, on sale...">
-                        </div>
+                        <!-- Notes removed -->
+                        <input type="hidden" id="groceryNotes" value="">
                         <div class="form-actions" style="margin-top:1.25rem;">
                             <button type="button" class="btn btn-ghost" onclick="clearGroceryForm()">Clear</button>
                             <button type="submit" class="btn btn-primary">

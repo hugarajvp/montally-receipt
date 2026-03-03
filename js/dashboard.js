@@ -74,6 +74,22 @@ function updateDashboard() {
     document.getElementById('dashPetrolVal').textContent = 'RM ' + petrolTotal.toFixed(2);
     updateChangeIndicator('petrolChange', petrolTotal, prevPetrolTotal);
 
+    // Grocery spending for dashboard
+    const groceries = appData.groceries || [];
+    const currentGrocery = groceries.filter(g => {
+        const d = new Date(g.date);
+        return d >= startDate && d <= endDate;
+    });
+    const prevGrocery = groceries.filter(g => {
+        const d = new Date(g.date);
+        return d >= prevStartDate && d <= prevEndDate;
+    });
+    const groceryTotal = currentGrocery.reduce((s, g) => s + g.amount, 0);
+    const prevGroceryTotal = prevGrocery.reduce((s, g) => s + g.amount, 0);
+    const groceryValEl = document.getElementById('dashGroceryVal');
+    if (groceryValEl) groceryValEl.textContent = 'RM ' + groceryTotal.toFixed(2);
+    if (document.getElementById('groceryChange')) updateChangeIndicator('groceryChange', groceryTotal, prevGroceryTotal);
+
     // Update changes
     updateChangeIndicator('earningsChange', totalEarnings, prevEarnings);
     updateChangeIndicator('tripsChange', totalTrips, prevTrips);

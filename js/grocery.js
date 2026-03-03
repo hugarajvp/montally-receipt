@@ -37,9 +37,10 @@ function saveGrocery(e) {
 function clearGroceryForm() {
     document.getElementById('groceryForm').reset();
     document.getElementById('groceryDate').value = new Date().toISOString().split('T')[0];
-    // Reset to Cash default
-    const cashRadio = document.getElementById('payVisa');
-    if (cashRadio) cashRadio.checked = true;
+    document.getElementById('groceryItem').value = 'Grocery';
+    // Reset to Visa default
+    const visaRadio = document.getElementById('payVisa');
+    if (visaRadio) visaRadio.checked = true;
 }
 
 function deleteGrocery(id) {
