@@ -320,8 +320,25 @@ async function fsSaveAppData(tenantCode, data) {
         // Remove undefined values (Firestore doesn't accept them)
         const clean = JSON.parse(JSON.stringify(data));
         await getTenantDocRef(tenantCode).set(clean, { merge: true });
+        console.log(`[FS] AppData saved to Firestore for ${tenantCode} ✅`);
     } catch (err) {
-        console.error('[FS] saveAppData error:', err);
+        console.warn('[FS] saveAppData first attempt failed:', err.message);
+        // Retry once after network reset
+        if (err.message && err.message.toLowerCase().includes('offline')) {
+            try {
+                await resetFirestoreNetwork();
+                const clean = JSON.parse(JSON.stringify(data));
+                await getTenantDocRef(tenantCode).set(clean, { merge: true });
+                console.log(`[FS] AppData saved after network reset for ${tenantCode} ✅`);
+            } catch (retryErr) {
+                console.error('[FS] saveAppData retry also failed:', retryErr.message);
+                // Queue for next time Firebase is ready
+                window._pendingSave = { tenantCode, data };
+                console.warn('[FS] Data queued for next sync attempt.');
+            }
+        } else {
+            console.error('[FS] saveAppData error:', err);
+        }
     }
 }
 
