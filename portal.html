@@ -289,6 +289,16 @@
                     </svg>
                     <span>Petrol</span>
                 </li>
+                <li class="menu-item" data-page="monthlyBilling" onclick="navigateTo('monthlyBilling')" id="menuMonthlyBilling">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <rect x="2" y="3" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M2 7h16" stroke="currentColor" stroke-width="1.5"/>
+                        <path d="M6 2v3M14 2v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <path d="M6 11h8M6 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    <span>Monthly Billing</span>
+                    <span id="unpaidBadge" style="background:#ef4444;color:#fff;font-size:0.65rem;font-weight:700;border-radius:99px;padding:1px 6px;margin-left:auto;"></span>
+                </li>
                 <li class="menu-item" data-page="email" onclick="navigateTo('email')" id="menuEmail">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                         <rect x="2" y="4" width="16" height="12" rx="2" stroke="currentColor" stroke-width="1.5" />
@@ -984,8 +994,8 @@
                                 <input type="number" id="petrolLiters" placeholder="0.00" step="0.01" min="0">
                             </div>
                             <div class="form-group">
-                                <label for="petrolCarPlate">Car Number Plate *</label>
-                                <select id="petrolCarPlate" required>
+                                <!-- Car plate removed -->
+                                <select id="petrolCarPlate" style="display:none;">
                                     <option value="">-- Select Car --</option>
                                 </select>
                             </div>
@@ -1156,60 +1166,82 @@
             </section>
 
 
-            <!-- ===== SETTINGS (Locations & Car Plates) ===== -->
+            <!-- ===== MONTHLY BILLING ===== -->
+            <section id="monthlyBillingSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Monthly Billing</h2>
+                        <p class="section-desc">Auto-generate receipts for all clients and track unpaid balances</p>
+                    </div>
+                </div>
+
+                <!-- Generate Bills Panel -->
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Generate Monthly Receipts</h3>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem;">Select a month and click Generate to create <strong>PENDING</strong> receipts for all clients who have a Monthly Rate set. Receipts that already exist for that month will be skipped.</p>
+                    <div class="form-grid" style="align-items:flex-end;">
+                        <div class="form-group">
+                            <label for="billingMonth">Month</label>
+                            <select id="billingMonth" class="select-input">
+                                <option value="January">January</option>
+                                <option value="February">February</option>
+                                <option value="March">March</option>
+                                <option value="April">April</option>
+                                <option value="May">May</option>
+                                <option value="June">June</option>
+                                <option value="July">July</option>
+                                <option value="August">August</option>
+                                <option value="September">September</option>
+                                <option value="October">October</option>
+                                <option value="November">November</option>
+                                <option value="December">December</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="billingYear">Year</label>
+                            <input type="number" id="billingYear" value="2026" min="2020" max="2040" class="select-input">
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="btn btn-primary" onclick="generateMonthlyBills()" id="generateBillsBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                </svg>
+                                Generate Bills
+                            </button>
+                        </div>
+                    </div>
+                    <div style="padding:0.75rem 1rem;background:rgba(99,102,241,0.08);border-radius:8px;margin-top:0.5rem;font-size:0.82rem;color:var(--text-muted);">
+                        💡 <strong>Tip:</strong> Make sure each client has a <strong>Monthly Rate</strong> set under the Clients section first.
+                    </div>
+                </div>
+
+                <!-- Unpaid Summary -->
+                <div class="receipt-form-card">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+                        <h3 class="form-section-title" style="margin:0;">Unpaid / Pending Summary</h3>
+                        <span style="background:rgba(239,68,68,0.12);color:#fca5a5;padding:0.25rem 0.75rem;border-radius:99px;font-size:0.8rem;font-weight:700;" id="unpaidCount">0</span>
+                    </div>
+                    <div id="unpaidSummaryList"></div>
+                </div>
+            </section>
+
+            <!-- ===== SETTINGS ===== -->
             <section id="settingsSection" class="content-section">
                 <div class="section-header">
                     <div>
                         <h2>Settings</h2>
-                        <p class="section-desc">Manage locations and car number plates</p>
+                        <p class="section-desc">Application settings</p>
                     </div>
                 </div>
-
-                <!-- Location Management -->
-                <div class="receipt-form-card" style="margin-bottom:2rem;">
-                    <h3 class="form-section-title" style="margin-top:0;">Manage Locations (From / To Dropdowns)</h3>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">Add or remove locations
-                        that appear in the From/To and Route dropdowns.</p>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="newLocationName">New Location Name</label>
-                            <input type="text" id="newLocationName" placeholder="e.g., Bukit Bintang">
-                        </div>
-                        <div class="form-group" style="display:flex;align-items:flex-end;">
-                            <button type="button" class="btn btn-primary" onclick="addLocation()">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
-                                        stroke-linecap="round" />
-                                </svg>
-                                Add Location
-                            </button>
-                        </div>
-                    </div>
-                    <div class="tag-list" id="locationsList" style="margin-top:1rem;"></div>
-                </div>
-
-                <!-- Car Number Plate Management -->
                 <div class="receipt-form-card">
-                    <h3 class="form-section-title" style="margin-top:0;">Manage Car Number Plates</h3>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">Add or remove car number
-                        plates that appear in the Petrol section.</p>
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="newCarPlate">Car Number Plate</label>
-                            <input type="text" id="newCarPlate" placeholder="e.g., BPE813"
-                                style="text-transform:uppercase;">
-                        </div>
-                        <div class="form-group" style="display:flex;align-items:flex-end;">
-                            <button type="button" class="btn btn-primary" onclick="addCarPlate()">
-                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
-                                        stroke-linecap="round" />
-                                </svg>
-                                Add Plate
-                            </button>
-                        </div>
-                    </div>
-                    <div class="tag-list" id="carPlatesList" style="margin-top:1rem;"></div>
+                    <p style="color:var(--text-muted);text-align:center;padding:2rem;">Settings are managed automatically. No configuration needed.</p>
+                </div>
+                <!-- Hidden elements needed by JS -->
+                <div style="display:none;">
+                    <input type="text" id="newLocationName">
+                    <div id="locationsList"></div>
+                    <input type="text" id="newCarPlate">
+                    <div id="carPlatesList"></div>
                 </div>
             </section>
 
@@ -1661,6 +1693,7 @@ TransitPay Team</textarea>
 
     <script src="js/petrol.js"></script>
     <script src="js/settings.js"></script>
+    <script src="js/monthly-billing.js"></script>
     <script src="js/email.js"></script>
     <script src="js/audit-log.js"></script>
     <script src="js/data-import.js"></script>

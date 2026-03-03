@@ -311,6 +311,7 @@ function navigateTo(page) {
     if (page === 'settings') { renderLocationTags(); renderCarPlateTags(); }
     if (page === 'tenants') { loadTenants(); }
     if (page === 'auditLog') { loadAuditLog(); }
+    if (page === 'monthlyBilling') { if (typeof initMonthlyBilling === 'function') initMonthlyBilling(); }
 }
 
 function toggleSidebar() {

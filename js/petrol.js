@@ -147,17 +147,12 @@ function savePetrolExpense(e) {
     const date = document.getElementById('petrolDate').value;
     const amount = parseFloat(document.getElementById('petrolAmount').value) || 0;
     const liters = parseFloat(document.getElementById('petrolLiters').value) || 0;
-    const carPlate = document.getElementById('petrolCarPlate').value;
+    const carPlate = ''; // Car plate removed from UI
     const notes = document.getElementById('petrolNotes').value.trim();
     const editingId = document.getElementById('editingPetrolId').value;
 
     if (!date || amount <= 0) {
         showToast('Date and amount are required', 'error');
-        return false;
-    }
-
-    if (!carPlate) {
-        showToast('Please select a car number plate', 'error');
         return false;
     }
 
