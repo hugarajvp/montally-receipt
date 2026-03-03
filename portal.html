@@ -289,15 +289,26 @@
                     </svg>
                     <span>Petrol</span>
                 </li>
-                <li class="menu-item" data-page="monthlyBilling" onclick="navigateTo('monthlyBilling')" id="menuMonthlyBilling">
+                <li class="menu-item" data-page="monthlyBilling" onclick="navigateTo('monthlyBilling')"
+                    id="menuMonthlyBilling">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                        <rect x="2" y="3" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                        <path d="M2 7h16" stroke="currentColor" stroke-width="1.5"/>
-                        <path d="M6 2v3M14 2v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-                        <path d="M6 11h8M6 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                        <rect x="2" y="3" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M2 7h16" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M6 2v3M14 2v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <path d="M6 11h8M6 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
                     </svg>
                     <span>Monthly Billing</span>
-                    <span id="unpaidBadge" style="background:#ef4444;color:#fff;font-size:0.65rem;font-weight:700;border-radius:99px;padding:1px 6px;margin-left:auto;"></span>
+                    <span id="unpaidBadge"
+                        style="background:#ef4444;color:#fff;font-size:0.65rem;font-weight:700;border-radius:99px;padding:1px 6px;margin-left:auto;"></span>
+                </li>
+                <li class="menu-item" data-page="grocery" onclick="navigateTo('grocery')" id="menuGrocery">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M3 3h2l2.5 9h9L19 7H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <circle cx="9" cy="17" r="1.3" stroke="currentColor" stroke-width="1.5" />
+                        <circle cx="16" cy="17" r="1.3" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                    <span>Grocery</span>
                 </li>
                 <li class="menu-item" data-page="email" onclick="navigateTo('email')" id="menuEmail">
                     <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
@@ -1178,7 +1189,9 @@
                 <!-- Generate Bills Panel -->
                 <div class="receipt-form-card" style="margin-bottom:2rem;">
                     <h3 class="form-section-title" style="margin-top:0;">Generate Monthly Receipts</h3>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem;">Select a month and click Generate to create <strong>PENDING</strong> receipts for all clients who have a Monthly Rate set. Receipts that already exist for that month will be skipped.</p>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem;">Select a month and click
+                        Generate to create <strong>PENDING</strong> receipts for all clients who have a Monthly Rate
+                        set. Receipts that already exist for that month will be skipped.</p>
                     <div class="form-grid" style="align-items:flex-end;">
                         <div class="form-group">
                             <label for="billingMonth">Month</label>
@@ -1199,19 +1212,24 @@
                         </div>
                         <div class="form-group">
                             <label for="billingYear">Year</label>
-                            <input type="number" id="billingYear" value="2026" min="2020" max="2040" class="select-input">
+                            <input type="number" id="billingYear" value="2026" min="2020" max="2040"
+                                class="select-input">
                         </div>
                         <div class="form-group">
-                            <button type="button" class="btn btn-primary" onclick="generateMonthlyBills()" id="generateBillsBtn">
+                            <button type="button" class="btn btn-primary" onclick="generateMonthlyBills()"
+                                id="generateBillsBtn">
                                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
                                 </svg>
                                 Generate Bills
                             </button>
                         </div>
                     </div>
-                    <div style="padding:0.75rem 1rem;background:rgba(99,102,241,0.08);border-radius:8px;margin-top:0.5rem;font-size:0.82rem;color:var(--text-muted);">
-                        💡 <strong>Tip:</strong> Make sure each client has a <strong>Monthly Rate</strong> set under the Clients section first.
+                    <div
+                        style="padding:0.75rem 1rem;background:rgba(99,102,241,0.08);border-radius:8px;margin-top:0.5rem;font-size:0.82rem;color:var(--text-muted);">
+                        💡 <strong>Tip:</strong> Make sure each client has a <strong>Monthly Rate</strong> set under the
+                        Clients section first.
                     </div>
                 </div>
 
@@ -1219,7 +1237,9 @@
                 <div class="receipt-form-card">
                     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
                         <h3 class="form-section-title" style="margin:0;">Unpaid / Pending Summary</h3>
-                        <span style="background:rgba(239,68,68,0.12);color:#fca5a5;padding:0.25rem 0.75rem;border-radius:99px;font-size:0.8rem;font-weight:700;" id="unpaidCount">0</span>
+                        <span
+                            style="background:rgba(239,68,68,0.12);color:#fca5a5;padding:0.25rem 0.75rem;border-radius:99px;font-size:0.8rem;font-weight:700;"
+                            id="unpaidCount">0</span>
                     </div>
                     <div id="unpaidSummaryList"></div>
                 </div>
@@ -1234,7 +1254,8 @@
                     </div>
                 </div>
                 <div class="receipt-form-card">
-                    <p style="color:var(--text-muted);text-align:center;padding:2rem;">Settings are managed automatically. No configuration needed.</p>
+                    <p style="color:var(--text-muted);text-align:center;padding:2rem;">Settings are managed
+                        automatically. No configuration needed.</p>
                 </div>
                 <!-- Hidden elements needed by JS -->
                 <div style="display:none;">
@@ -1439,6 +1460,117 @@ TransitPay Team</textarea>
             </section>
 
             <!-- ===== AUDIT LOG ===== -->
+            <!-- ===== GROCERY TRACKER ===== -->
+            <section id="grocerySection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>🛒 Grocery Tracker</h2>
+                        <p class="section-desc">Track household grocery spending</p>
+                    </div>
+                    <div class="header-actions">
+                        <select id="groceryFilterMonth" onchange="loadGroceries()" class="select-input">
+                            <option value="all">All Months</option>
+                        </select>
+                        <button class="btn btn-outline" onclick="printGroceryReport()">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 6V2h8v4M4 11H2V7h12v4h-2M4 11v3h8v-3" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Print Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Add Item Form -->
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Add Grocery Item</h3>
+                    <form id="groceryForm" onsubmit="return saveGrocery(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="groceryDate">Date *</label>
+                                <input type="date" id="groceryDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="groceryItem">Item / Description *</label>
+                                <input type="text" id="groceryItem" placeholder="e.g. Rice, Chicken, Vegetables"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label for="groceryAmount">Amount (RM) *</label>
+                                <input type="number" id="groceryAmount" placeholder="0.00" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <!-- Payment Method -->
+                        <div class="form-group" style="margin-top:0.5rem;">
+                            <label>Payment Method *</label>
+                            <div class="payment-status-group">
+                                <label class="status-radio-label">
+                                    <input type="radio" name="groceryPayment" id="payVisa" value="Visa" checked>
+                                    <span class="status-radio-btn" style="border-color:rgba(99,102,241,0.4);">💳
+                                        Visa</span>
+                                </label>
+                                <label class="status-radio-label">
+                                    <input type="radio" name="groceryPayment" value="Aremex">
+                                    <span class="status-radio-btn" style="border-color:rgba(245,158,11,0.4);">🟡
+                                        Aremex</span>
+                                </label>
+                                <label class="status-radio-label">
+                                    <input type="radio" name="groceryPayment" value="Cash">
+                                    <span class="status-radio-btn" style="border-color:rgba(34,197,94,0.4);">💵
+                                        Cash</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Notes (optional) -->
+                        <div class="form-group" style="margin-top:0.75rem;">
+                            <label for="groceryNotes">Notes (optional)</label>
+                            <input type="text" id="groceryNotes" placeholder="e.g. Expired soon, on sale...">
+                        </div>
+                        <div class="form-actions" style="margin-top:1.25rem;">
+                            <button type="button" class="btn btn-ghost" onclick="clearGroceryForm()">Clear</button>
+                            <button type="submit" class="btn btn-primary">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Add Item
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Grocery List -->
+                <div class="table-card">
+                    <div class="chart-header">
+                        <h3>Grocery History</h3>
+                        <span style="font-family:var(--font-mono);font-weight:700;color:var(--primary-300);"
+                            id="groceryTotal">RM 0.00</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Item</th>
+                                    <th>Payment</th>
+                                    <th>Amount</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="groceryTableBody">
+                                <tr class="empty-row">
+                                    <td colspan="5">
+                                        <div class="empty-state-mini">
+                                            <p>No grocery entries yet. Add your first item above!</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
             <section id="auditLogSection" class="content-section">
                 <div class="section-header">
                     <div>
@@ -1694,6 +1826,7 @@ TransitPay Team</textarea>
     <script src="js/petrol.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/monthly-billing.js"></script>
+    <script src="js/grocery.js"></script>
     <script src="js/email.js"></script>
     <script src="js/audit-log.js"></script>
     <script src="js/data-import.js"></script>

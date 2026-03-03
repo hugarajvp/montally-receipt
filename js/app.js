@@ -312,6 +312,7 @@ function navigateTo(page) {
     if (page === 'tenants') { loadTenants(); }
     if (page === 'auditLog') { loadAuditLog(); }
     if (page === 'monthlyBilling') { if (typeof initMonthlyBilling === 'function') initMonthlyBilling(); }
+    if (page === 'grocery') { if (typeof initGrocery === 'function') initGrocery(); }
 }
 
 function toggleSidebar() {
