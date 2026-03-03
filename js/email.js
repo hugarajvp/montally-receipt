@@ -1,146 +1,207 @@
 ﻿/* ============================
-   TRANSITPAY - Email Invoicing
+   TRANSITPAY - WhatsApp Invoicing
+   (email stubs kept for backward compat)
    ============================ */
 
-// ==================== EMAIL INVOICING ====================
-function populateInvoiceClients() {
-    const select = document.getElementById('invoiceClient');
-    if (!select) return;
-    const clientsWithEmail = (appData.clients || []).filter(c => c.email);
-    select.innerHTML = '<option value="all">All Clients with Email (' + clientsWithEmail.length + ')</option>' +
-        clientsWithEmail.map(c => `<option value="${c.id}">${c.name} (${c.email})</option>`).join('');
+// ============================================================
+//  WHATSAPP HELPERS
+// ============================================================
 
-    // Set current month
-    const now = new Date();
-    const monthSelect = document.getElementById('invoiceMonth');
-    if (monthSelect) {
-        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-        monthSelect.value = months[now.getMonth()];
+function buildWhatsAppMessage(client, month, year) {
+    const amount = (client.monthlyRate || 0).toFixed(2);
+    return `Hi ${client.name} 👋,
+
+This is a friendly reminder that your *transport payment* for *${month} ${year}* is due.
+
+💰 *Amount:* RM ${amount}
+📅 *Period:* ${month} ${year}
+🚌 *Route:* ${client.route || 'N/A'}
+
+Please make your payment at your earliest convenience. Thank you! 🙏
+
+— TransitPay`;
+}
+
+function formatPhone(phone) {
+    let p = (phone || '').replace(/[\s\-\(\)]/g, '');
+    if (p.startsWith('0')) p = '60' + p.slice(1);
+    p = p.replace(/^\+/, '');
+    return p;
+}
+
+// ============================================================
+//  POPULATE CLIENT DROPDOWN
+// ============================================================
+function populateInvoiceClients() {
+    const waSelect = document.getElementById('waClient');
+    if (waSelect) {
+        const clients = appData.clients || [];
+        waSelect.innerHTML = '<option value="">-- Select Client --</option>' +
+            clients.map(c => `<option value="${c.id}">${c.name}${c.phone ? ' (+' + c.phone + ')' : ''}</option>`).join('');
     }
+
+    const now = new Date();
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const setMonth = (id) => { const el = document.getElementById(id); if (el) el.value = months[now.getMonth()]; };
+    const setYear = (id) => { const el = document.getElementById(id); if (el) el.value = now.getFullYear(); };
+    setMonth('waMonth'); setYear('waYear');
+    setMonth('waBulkMonth'); setYear('waBulkYear');
+
+    // Old email stubs
+    const invoiceClient = document.getElementById('invoiceClient');
+    if (invoiceClient) {
+        const clientsWithEmail = (appData.clients || []).filter(c => c.email);
+        invoiceClient.innerHTML = '<option value="all">All Clients with Email (' + clientsWithEmail.length + ')</option>' +
+            clientsWithEmail.map(c => `<option value="${c.id}">${c.name} (${c.email})</option>`).join('');
+    }
+    const monthSelect = document.getElementById('invoiceMonth');
+    if (monthSelect) monthSelect.value = months[now.getMonth()];
     const yearInput = document.getElementById('invoiceYear');
     if (yearInput) yearInput.value = now.getFullYear();
 }
 
-function previewInvoiceEmail() {
-    const month = document.getElementById('invoiceMonth').value;
-    const year = document.getElementById('invoiceYear').value;
-    const subject = document.getElementById('invoiceSubject').value;
-    const message = document.getElementById('invoiceMessage').value;
-    const clientId = document.getElementById('invoiceClient').value;
+// ============================================================
+//  PREVIEW MESSAGE
+// ============================================================
+function updateWaPreview() {
+    const clientId = document.getElementById('waClient')?.value;
+    const month = document.getElementById('waMonth')?.value;
+    const year = document.getElementById('waYear')?.value;
+    const preview = document.getElementById('waMessagePreview');
+    if (!preview) return;
 
-    let sampleClient;
-    if (clientId !== 'all') {
-        sampleClient = appData.clients.find(c => c.id === clientId);
-    } else {
-        sampleClient = (appData.clients || []).find(c => c.email) || { name: 'Sample Client', email: 'sample@email.com', route: 'Sample Route', monthlyRate: 500 };
-    }
+    if (!clientId) { preview.value = ''; return; }
 
-    const previewMsg = message
-        .replace(/{CLIENT_NAME}/g, sampleClient.name)
-        .replace(/{MONTH}/g, month)
-        .replace(/{YEAR}/g, year)
-        .replace(/{AMOUNT}/g, (sampleClient.monthlyRate || 0).toFixed(2))
-        .replace(/{ROUTE}/g, sampleClient.route || 'N/A');
+    const client = (appData.clients || []).find(c => c.id === clientId);
+    if (!client) return;
 
-    const reportContent = document.getElementById('reportPreviewModal');
-    if (reportContent) {
-        reportContent.style.display = 'flex';
-        reportContent.querySelector('.modal-body').innerHTML = `
-            <div class="email-preview-card">
-                <div class="email-header">
-                    <div class="email-field"><strong>To:</strong> ${sampleClient.email || 'N/A'}</div>
-                    <div class="email-field"><strong>Subject:</strong> ${subject}</div>
-                </div>
-                <div class="email-body">${previewMsg}</div>
-            </div>
-        `;
-    } else {
-        alert('Preview:\n\nTo: ' + (sampleClient.email || 'N/A') + '\nSubject: ' + subject + '\n\n' + previewMsg);
-    }
+    preview.value = buildWhatsAppMessage(client, month, year);
 }
 
-function sendInvoiceEmails() {
-    const month = document.getElementById('invoiceMonth').value;
-    const year = document.getElementById('invoiceYear').value;
-    const subject = document.getElementById('invoiceSubject').value;
-    const message = document.getElementById('invoiceMessage').value;
-    const clientId = document.getElementById('invoiceClient').value;
+// ============================================================
+//  SINGLE CLIENT — OPEN WHATSAPP
+// ============================================================
+function sendWhatsApp() {
+    const clientId = document.getElementById('waClient')?.value;
+    const month = document.getElementById('waMonth')?.value;
+    const year = document.getElementById('waYear')?.value;
 
-    let clients;
-    if (clientId === 'all') {
-        clients = (appData.clients || []).filter(c => c.email);
-    } else {
-        const client = appData.clients.find(c => c.id === clientId);
-        clients = client ? [client] : [];
-    }
+    if (!clientId) { showToast('Please select a client', 'error'); return; }
 
-    if (clients.length === 0) {
-        showToast('No clients with email addresses found', 'error');
+    const client = (appData.clients || []).find(c => c.id === clientId);
+    if (!client) { showToast('Client not found', 'error'); return; }
+    if (!client.phone) { showToast(`${client.name} has no phone number saved`, 'error'); return; }
+
+    const msg = buildWhatsAppMessage(client, month, year);
+    const phone = formatPhone(client.phone);
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+
+    showToast(`Opening WhatsApp for ${client.name} ✅`, 'success');
+}
+
+// ============================================================
+//  BULK — ALL UNPAID CLIENTS
+// ============================================================
+function sendBulkWhatsApp() {
+    const month = document.getElementById('waBulkMonth')?.value;
+    const year = document.getElementById('waBulkYear')?.value;
+    const resultEl = document.getElementById('waBulkResult');
+
+    const unpaid = (appData.receipts || []).filter(r =>
+        (r.paymentStatus === 'Pending' || r.paymentStatus === 'Unpaid') &&
+        r.month === month && String(r.year) === String(year)
+    );
+
+    if (unpaid.length === 0) {
+        showToast(`No pending/unpaid receipts for ${month} ${year}`, 'error');
         return;
     }
 
-    let sentCount = 0;
-    clients.forEach(client => {
-        const emailBody = message
-            .replace(/{CLIENT_NAME}/g, client.name)
-            .replace(/{MONTH}/g, month)
-            .replace(/{YEAR}/g, year)
-            .replace(/{AMOUNT}/g, (client.monthlyRate || 0).toFixed(2))
-            .replace(/{ROUTE}/g, client.route || 'N/A');
+    let opened = 0;
+    const results = [];
 
-        // Open mailto link
-        const mailtoLink = `mailto:${client.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
-        window.open(mailtoLink, '_blank');
+    unpaid.forEach((r, i) => {
+        const client = (appData.clients || []).find(c => c.name === r.clientName || c.id === r.clientId);
+        const phone = client?.phone || r.clientPhone;
 
-        // Record in history
-        if (!appData.emailHistory) appData.emailHistory = [];
-        appData.emailHistory.push({
-            id: 'INV-' + Date.now() + '-' + sentCount,
-            dateSent: new Date().toISOString(),
-            clientName: client.name,
-            clientEmail: client.email,
-            period: month + ' ' + year,
-            amount: client.monthlyRate || 0,
-            status: 'sent'
-        });
+        if (!phone) {
+            results.push(`⚠️ <strong>${r.clientName}</strong> — no phone number`);
+            return;
+        }
 
-        sentCount++;
+        const msg = buildWhatsAppMessage(
+            { name: r.clientName, monthlyRate: r.total, route: client?.route || 'N/A' },
+            month, year
+        );
+        const url = `https://wa.me/${formatPhone(phone)}?text=${encodeURIComponent(msg)}`;
+
+        setTimeout(() => window.open(url, '_blank'), i * 800);
+        results.push(`✅ <strong>${r.clientName}</strong> — RM ${r.total.toFixed(2)}`);
+        opened++;
     });
 
-    saveAppData(appData);
-    loadEmailHistory();
-    showToast(`Invoice email(s) opened for ${sentCount} client(s)`, 'success');
+    if (resultEl) {
+        resultEl.innerHTML = `
+            <div style="background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.2);border-radius:8px;padding:1rem;">
+                <strong style="color:#4ade80;">Sending to ${opened} client(s):</strong>
+                <ul style="margin-top:0.5rem;padding-left:1.25rem;font-size:0.85rem;">
+                    ${results.map(r => `<li>${r}</li>`).join('')}
+                </ul>
+            </div>`;
+    }
+
+    showToast(`Opening WhatsApp for ${opened} client(s)...`, 'success');
 }
 
-function loadEmailHistory() {
-    const tbody = document.getElementById('emailTableBody');
-    const countEl = document.getElementById('emailCount');
-    if (!tbody) return;
+// ============================================================
+//  SHARE RECEIPT FROM MODAL (set by receipts.js openReceiptModal)
+// ============================================================
+let _currentReceiptForWa = null;
 
-    const history = (appData.emailHistory || []).sort((a, b) => new Date(b.dateSent) - new Date(a.dateSent));
-    if (countEl) countEl.textContent = history.length;
+function shareReceiptWhatsApp() {
+    const receipt = _currentReceiptForWa;
+    if (!receipt) { showToast('No receipt selected', 'error'); return; }
 
-    if (history.length === 0) {
-        tbody.innerHTML = `
-            <tr class="empty-row">
-                <td colspan="6">
-                    <div class="empty-state-mini">
-                        <p>No invoices sent yet.</p>
-                    </div>
-                </td>
-            </tr>
-        `;
+    const phone = receipt.clientPhone || '';
+    const name = receipt.clientName || 'Client';
+    const amount = (receipt.total || 0).toFixed(2);
+    const month = receipt.month || '';
+    const year = receipt.year || '';
+    const id = receipt.id || '';
+    const status = receipt.paymentStatus || 'Pending';
+
+    const msg = `Hi ${name} 👋,
+
+Here is your *TransitPay Receipt* — *${id}*
+
+💰 *Amount:* RM ${amount}
+📅 *Period:* ${month} ${year}
+📋 *Status:* ${status}
+
+Thank you for using our transport service! 🚌
+
+— TransitPay`;
+
+    if (!phone) {
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(msg).then(() =>
+                showToast('No phone number — message copied to clipboard!', 'info')
+            );
+        } else {
+            showToast('No phone number saved for this client', 'error');
+        }
         return;
     }
 
-    tbody.innerHTML = history.map(h => `
-        <tr>
-            <td>${formatDate(h.dateSent.split('T')[0])}</td>
-            <td><strong>${h.clientName}</strong></td>
-            <td>${h.clientEmail}</td>
-            <td>${h.period}</td>
-            <td style="font-family:var(--font-mono);font-weight:600;">RM ${(h.amount || 0).toFixed(2)}</td>
-            <td><span class="badge-${h.status}">${h.status.charAt(0).toUpperCase() + h.status.slice(1)}</span></td>
-        </tr>
-    `).join('');
+    const url = `https://wa.me/${formatPhone(phone)}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank');
+    showToast(`Opening WhatsApp for ${name} ✅`, 'success');
 }
+
+// ============================================================
+//  OLD STUBS (kept so nothing crashes)
+// ============================================================
+function previewInvoiceEmail() { showToast("Use WhatsApp instead — it's faster! 💬", 'info'); }
+function sendInvoiceEmails() { showToast("Use WhatsApp instead — it's faster! 💬", 'info'); }
+function loadEmailHistory() { }

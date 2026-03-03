@@ -312,6 +312,8 @@ function showReceiptPreview(receipt) {
         </div>
     `;
 
+    // Store for WhatsApp share button
+    if (typeof _currentReceiptForWa !== 'undefined') _currentReceiptForWa = receipt;
     document.getElementById('receiptModal').classList.add('active');
 }
 

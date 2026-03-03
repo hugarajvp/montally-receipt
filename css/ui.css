@@ -951,6 +951,14 @@
     color: var(--text-muted);
 }
 
+/* General checked state (for Visa/Aremex/Cash etc without specific class) */
+.status-radio-label input[type="radio"]:checked+.status-radio-btn {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: var(--primary-500);
+    color: var(--primary-300);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
 .status-radio-label input[type="radio"]:checked+.status-radio-btn.status-paid {
     background: rgba(34, 197, 94, 0.12);
     border-color: #22c55e;
