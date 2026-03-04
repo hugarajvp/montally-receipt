@@ -1,0 +1,560 @@
+/* ============================
+   TRANSITPAY — MOBILE.CSS
+   Full mobile responsive overrides
+   Targets: phones ≤ 768px
+   ============================ */
+
+/* ─── PREVENT HORIZONTAL SCROLL ──────────────────────────────── */
+html,
+body {
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+}
+
+/* ─── BIGGER TAP TARGETS ─────────────────────────────────────── */
+@media (max-width: 768px) {
+
+    button,
+    .btn,
+    .menu-item,
+    .portal-tab,
+    input,
+    select,
+    textarea {
+        min-height: 44px;
+        /* Apple HIG minimum tap target */
+    }
+
+    /* ── MOBILE TOPBAR ─────────────────────────────────────── */
+    .mobile-topbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 56px;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1rem;
+        z-index: 1003;
+    }
+
+    /* Status bar banner (tenant view) */
+    .tenant-banner {
+        top: 56px !important;
+        font-size: 0.72rem !important;
+        padding: 0.35rem 1rem !important;
+    }
+
+    /* ── MAIN CONTENT OFFSET ───────────────────────────────── */
+    .main-content {
+        margin-left: 0 !important;
+        width: 100% !important;
+        padding: 5rem 1rem 5rem !important;
+        /* top for topbar, bottom for nav */
+    }
+
+    /* ── SECTION HEADERS ───────────────────────────────────── */
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    .section-header h2 {
+        font-size: 1.3rem !important;
+    }
+
+    .header-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .header-actions .btn,
+    .header-actions .select-input {
+        flex: 1;
+        min-width: 120px;
+        font-size: 0.82rem;
+    }
+
+    /* ── STATS GRID ─────────────────────────────────────────── */
+    .stats-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.75rem !important;
+        margin-bottom: 1.25rem !important;
+    }
+
+    .stat-card {
+        padding: 1rem !important;
+        gap: 0.65rem;
+    }
+
+    .stat-icon {
+        width: 36px !important;
+        height: 36px !important;
+    }
+
+    .stat-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .stat-value {
+        font-size: 1.3rem !important;
+    }
+
+    .stat-label {
+        font-size: 0.68rem !important;
+    }
+
+    /* ── CHARTS GRID ─────────────────────────────────────────── */
+    .charts-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem;
+    }
+
+    .chart-card {
+        padding: 1rem;
+    }
+
+    .chart-body {
+        height: 180px !important;
+    }
+
+    .chart-body-donut {
+        height: 180px !important;
+    }
+
+    /* ── RECENT TRANSACTIONS TABLE ──────────────────────────── */
+    .recent-card,
+    .table-card {
+        padding: 1rem;
+        border-radius: var(--radius-md);
+    }
+
+    /* Stack table rows as cards on mobile */
+    .data-table thead {
+        display: none;
+        /* Hide column headers */
+    }
+
+    .data-table,
+    .data-table tbody,
+    .data-table tr,
+    .data-table td {
+        display: block;
+        width: 100%;
+    }
+
+    .data-table tr {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        margin-bottom: 0.75rem;
+        padding: 0.75rem;
+        position: relative;
+    }
+
+    .data-table tr:last-child {
+        margin-bottom: 0;
+    }
+
+    .data-table td {
+        border: none !important;
+        padding: 0.2rem 0 !important;
+        font-size: 0.85rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .data-table td::before {
+        content: attr(data-label);
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        flex-shrink: 0;
+        margin-right: 0.5rem;
+    }
+
+    /* ── RECEIPT CARDS ──────────────────────────────────────── */
+    .receipts-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem;
+    }
+
+    .receipt-card {
+        padding: 1rem !important;
+    }
+
+    .receipt-card-header {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    /* ── FORM IMPROVEMENTS ─────────────────────────────────── */
+    .form-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    .receipt-form-card {
+        padding: 1rem !important;
+    }
+
+    .payment-type-selector {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.75rem !important;
+    }
+
+    .type-btn {
+        padding: 1rem !important;
+    }
+
+    .type-label {
+        font-size: 0.85rem !important;
+    }
+
+    .type-desc {
+        display: none;
+        /* Hide description on mobile to save space */
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* ── TENANT CARDS ───────────────────────────────────────── */
+    .tenant-card {
+        padding: 1rem !important;
+    }
+
+    .tenant-card-footer {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .tenant-card-footer .btn {
+        flex: 1;
+        font-size: 0.75rem !important;
+        padding: 0.4rem 0.5rem !important;
+    }
+
+    .tenant-card-stats {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+
+    /* ── MODAL IMPROVEMENTS ─────────────────────────────────── */
+    .modal-content {
+        margin: 0 !important;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+        max-height: 92vh !important;
+        overflow-y: auto !important;
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        padding: 1.25rem !important;
+    }
+
+    .modal-header {
+        padding-bottom: 0.75rem;
+    }
+
+    /* Swipe-down handle for modals */
+    .modal-content::before {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 4px;
+        background: var(--border-color);
+        border-radius: 2px;
+        margin: 0 auto 1rem;
+    }
+
+    /* ── BUTTONS (global) ───────────────────────────────────── */
+    .btn {
+        font-size: 0.85rem !important;
+        padding: 0.6rem 1rem !important;
+    }
+
+    .btn-primary {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* ── REPORTS ─────────────────────────────────────────────── */
+    .report-summary-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.75rem !important;
+    }
+
+    .report-summary-card {
+        padding: 1rem !important;
+    }
+
+    /* ── PETROL / GROCERY SECTION ───────────────────────────── */
+    .petrol-grid,
+    .grocery-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem;
+    }
+
+    .petrol-form-card,
+    .grocery-form-card {
+        padding: 1rem !important;
+    }
+
+    /* ── AUDIT LOG ───────────────────────────────────────────── */
+    .audit-log-list {
+        gap: 0.5rem;
+    }
+
+    .audit-entry {
+        padding: 0.75rem !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.4rem;
+    }
+
+    .audit-time {
+        font-size: 0.7rem !important;
+    }
+
+    /* ── TOAST — FULL WIDTH ON MOBILE ───────────────────────── */
+    .toast-container {
+        bottom: 4.5rem !important;
+        right: 1rem !important;
+        left: 1rem !important;
+    }
+
+    .toast {
+        min-width: unset !important;
+        width: 100% !important;
+        font-size: 0.85rem !important;
+        padding: 0.75rem 1rem !important;
+    }
+
+    /* ── CLIENTS GRID ─────────────────────────────────────────── */
+    .clients-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* ── SETTINGS PAGE ─────────────────────────────────────────── */
+    .settings-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* ── USERS LIST ────────────────────────────────────────────── */
+    .users-list .user-card {
+        flex-direction: column;
+        align-items: flex-start !important;
+        gap: 0.5rem;
+    }
+
+    /* ── VIEWING BANNER ─────────────────────────────────────────── */
+    #viewingBanner {
+        font-size: 0.72rem !important;
+        padding: 0.3rem 0.75rem !important;
+    }
+
+    /* Fix the banner pushing content when topbar is present */
+    .main-content:has(~ #viewingBanner:not([style*="none"])),
+    body:has(#viewingBanner:not([style*="display: none"])) .main-content {
+        padding-top: 7.5rem !important;
+    }
+
+    /* ── SIDEBAR CLOSE BUTTON ───────────────────────────────── */
+    .sidebar-close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: rgba(255, 255, 255, 0.05);
+        border: none;
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        cursor: pointer;
+        margin-left: auto;
+    }
+
+    /* ── MONTHLY BILLING GRID ────────────────────────────────── */
+    .billing-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* ── HIDE NON-ESSENTIAL ON SMALL SCREENS ─────────────────── */
+    .hide-mobile {
+        display: none !important;
+    }
+
+    /* ── SHOW MOBILE-ONLY ELEMENTS ───────────────────────────── */
+    .show-mobile {
+        display: block !important;
+    }
+}
+
+/* ─── EXTRA SMALL (< 380px like older iPhones) ─────────────── */
+@media (max-width: 380px) {
+    .stats-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .stat-value {
+        font-size: 1.1rem !important;
+    }
+
+    .payment-type-selector {
+        grid-template-columns: 1fr !important;
+    }
+
+    .main-content {
+        padding: 5rem 0.75rem 5rem !important;
+    }
+
+    .report-summary-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .tenant-card-stats {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+/* ─── BOTTOM NAV BAR (Mobile only) ──────────────────────────── */
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: flex !important;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 60px;
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--border-color);
+        z-index: 1003;
+        align-items: center;
+        justify-content: space-around;
+        padding: 0 0.5rem;
+        padding-bottom: env(safe-area-inset-bottom);
+        /* iPhone home bar */
+    }
+
+    .mobile-nav-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.15rem;
+        flex: 1;
+        height: 100%;
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-muted);
+        transition: color 0.2s;
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.1rem;
+        border-radius: var(--radius-sm);
+    }
+
+    .mobile-nav-btn.active {
+        color: var(--primary-400);
+    }
+
+    .mobile-nav-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+    /* Add scroll padding so content isn't hidden behind bottom nav */
+    .main-content {
+        padding-bottom: 4.5rem !important;
+    }
+}
+
+/* Desktop: hide mobile-only elements */
+@media (min-width: 769px) {
+    .mobile-bottom-nav {
+        display: none !important;
+    }
+
+    .show-mobile {
+        display: none !important;
+    }
+}
+
+/* ─── SAFE AREA (notch phones / iPhone X+) ──────────────────── */
+@supports (padding: env(safe-area-inset-top)) {
+    @media (max-width: 768px) {
+        .mobile-topbar {
+            padding-top: env(safe-area-inset-top);
+            height: calc(56px + env(safe-area-inset-top));
+        }
+
+        .mobile-bottom-nav {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+    }
+}
+
+/* ─── PORTAL LOGIN — MOBILE IMPROVEMENTS ────────────────────── */
+@media (max-width: 768px) {
+    .portal-container {
+        padding: 1rem !important;
+        align-items: flex-start;
+        padding-top: 2rem !important;
+    }
+
+    .login-card {
+        padding: 1.5rem 1.25rem !important;
+    }
+
+    .login-logo h1 {
+        font-size: 1.3rem !important;
+    }
+
+    .logo-icon {
+        width: 52px !important;
+        height: 52px !important;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr !important;
+    }
+
+    .form-group input,
+    .form-group select {
+        font-size: 16px !important;
+        /* Prevent iOS auto-zoom on focus */
+        padding: 0.8rem 1rem !important;
+    }
+
+    .portal-tab {
+        font-size: 0.78rem !important;
+        padding: 0.65rem 0.5rem !important;
+    }
+
+    /* Portal toast — full width */
+    .toast-container {
+        top: 1rem !important;
+        right: 1rem !important;
+        left: 1rem !important;
+        bottom: unset !important;
+    }
+}

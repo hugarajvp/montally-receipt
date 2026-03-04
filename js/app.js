@@ -340,6 +340,19 @@ function navigateTo(page) {
     if (page === 'auditLog') { loadAuditLog(); }
     if (page === 'monthlyBilling') { if (typeof initMonthlyBilling === 'function') initMonthlyBilling(); }
     if (page === 'grocery') { if (typeof initGrocery === 'function') initGrocery(); }
+
+    // Sync mobile bottom nav
+    const NAV_MAP = {
+        dashboard: 'mnavDashboard', receipts: 'mnavReceipts',
+        newReceipt: 'mnavNewReceipt', clients: 'mnavClients'
+    };
+    setMobileNavActive(NAV_MAP[page] || 'mnavMore');
+}
+
+function setMobileNavActive(btnId) {
+    document.querySelectorAll('.mobile-nav-btn').forEach(b => b.classList.remove('active'));
+    const btn = document.getElementById(btnId);
+    if (btn) btn.classList.add('active');
 }
 
 function toggleSidebar() {
