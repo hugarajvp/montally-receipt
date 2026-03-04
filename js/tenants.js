@@ -1,4 +1,4 @@
-/* ============================
+﻿/* ============================
    TRANSITPAY - Multi-Tenant System
    ============================ */
 
@@ -651,7 +651,7 @@ function deleteTenant(tenantId) {
 
 // ==================== TENANT LIST RENDERING ====================
 async function loadTenants() {
-    // If on tenants page, try to get fresh registry from cloud
+    // Always fetch fresh registry from cloud
     if (window.firebaseReady && typeof getRegistryCloud === 'function') {
         await getRegistryCloud();
     }
@@ -680,41 +680,14 @@ async function loadTenants() {
         return;
     }
 
+    // Render skeleton cards immediately (fast)
     grid.innerHTML = tenants.map(tenant => {
         const isActive = tenant.status === 'Active';
         const statusBadge = isActive
             ? '<span class="badge badge-active">Active</span>'
             : '<span class="badge badge-inactive">Suspended</span>';
-
-        // Get tenant data stats
-        const tenantKey = getTenantStorageKey(tenant.code);
-        const tenantRaw = localStorage.getItem(tenantKey);
-        let tenantData = {};
-        let statsLoading = false;
-
-        if (tenantRaw) {
-            tenantData = JSON.parse(tenantRaw);
-        } else if (typeof fsGetAppData === 'function') {
-            // Stats aren't local - we'll need to fetch them
-            statsLoading = true;
-            // Trigger background fetch
-            fsGetAppData(tenant.code).then(data => {
-                if (data) {
-                    localStorage.setItem(tenantKey, JSON.stringify(data));
-                    // Re-render only if still on the tenants page
-                    if (document.getElementById('tenantsSection').classList.contains('active')) {
-                        loadTenants();
-                    }
-                }
-            });
-        }
-
-        const receiptsCount = (tenantData.receipts || []).length;
-        const clientsCount = (tenantData.clients || []).length;
-        const totalEarnings = (tenantData.receipts || []).reduce((s, r) => s + (r.total || 0), 0);
-
         return `
-            <div class="tenant-card ${isActive ? '' : 'suspended'}">
+            <div class="tenant-card ${isActive ? '' : 'suspended'}" id="tcard-${tenant.code}">
                 <div class="tenant-card-header">
                     <div class="tenant-code-chip">${tenant.code}</div>
                     ${statusBadge}
@@ -724,25 +697,10 @@ async function loadTenants() {
                     <p class="tenant-card-phone">${tenant.phone}</p>
                     ${tenant.notes ? `<p class="tenant-card-notes">${tenant.notes}</p>` : ''}
                 </div>
-                <div class="tenant-card-stats ${statsLoading ? 'loading-stats' : ''}">
-                    ${statsLoading ? `
-                        <div style="grid-column:1/-1;text-align:center;padding:0.5rem;font-size:0.75rem;color:var(--text-muted);">
-                            Fetching cloud stats...
-                        </div>
-                    ` : `
-                        <div class="tenant-stat">
-                            <span class="tenant-stat-value">${receiptsCount}</span>
-                            <span class="tenant-stat-label">Receipts</span>
-                        </div>
-                        <div class="tenant-stat">
-                            <span class="tenant-stat-value">${clientsCount}</span>
-                            <span class="tenant-stat-label">Clients</span>
-                        </div>
-                        <div class="tenant-stat">
-                            <span class="tenant-stat-value">RM ${totalEarnings.toFixed(0)}</span>
-                            <span class="tenant-stat-label">Earnings</span>
-                        </div>
-                    `}
+                <div class="tenant-card-stats" id="tstats-${tenant.code}">
+                    <div style="grid-column:1/-1;text-align:center;padding:0.5rem;font-size:0.75rem;color:var(--text-muted);">
+                        🔄 Loading stats...
+                    </div>
                 </div>
                 <div class="tenant-card-footer">
                     <button class="btn btn-outline" onclick="copyTenantLink('${tenant.code}')" title="Copy tenant portal link" style="font-size:0.75rem;padding:0.35rem 0.7rem;">
@@ -783,8 +741,52 @@ async function loadTenants() {
             </div>
         `;
     }).join('');
-}
 
+    // Now fetch LIVE stats for each tenant from Firestore (parallel)
+    await Promise.all(tenants.map(async tenant => {
+        const statsEl = document.getElementById('tstats-' + tenant.code);
+        if (!statsEl) return;
+        try {
+            let tenantData = null;
+            // Try localStorage cache first (instant display while cloud loads)
+            const tenantKey = getTenantStorageKey(tenant.code);
+            const localRaw = localStorage.getItem(tenantKey);
+            if (localRaw) tenantData = JSON.parse(localRaw);
+
+            // ALWAYS fetch fresh from Firestore for accurate stats
+            if (window.firebaseReady && typeof fsGetAppData === 'function') {
+                const cloudData = await fsGetAppData(tenant.code);
+                if (cloudData) {
+                    tenantData = cloudData;
+                    localStorage.setItem(tenantKey, JSON.stringify(cloudData));
+                }
+            }
+
+            if (!tenantData) tenantData = {};
+            const receiptsCount = (tenantData.receipts || []).length;
+            const clientsCount = (tenantData.clients || []).length;
+            const totalEarnings = (tenantData.receipts || []).reduce((s, r) => s + (r.total || 0), 0);
+
+            statsEl.innerHTML = `
+                <div class="tenant-stat">
+                    <span class="tenant-stat-value">${receiptsCount}</span>
+                    <span class="tenant-stat-label">Receipts</span>
+                </div>
+                <div class="tenant-stat">
+                    <span class="tenant-stat-value">${clientsCount}</span>
+                    <span class="tenant-stat-label">Clients</span>
+                </div>
+                <div class="tenant-stat">
+                    <span class="tenant-stat-value">RM ${totalEarnings.toFixed(0)}</span>
+                    <span class="tenant-stat-label">Earnings</span>
+                </div>
+            `;
+        } catch (err) {
+            console.warn('[Tenants] Stats load failed for', tenant.code, ':', err.message);
+            if (statsEl) statsEl.innerHTML = `<div style="grid-column:1/-1;text-align:center;font-size:0.75rem;color:var(--text-muted);">⚠️ Stats unavailable</div>`;
+        }
+    }));
+}
 
 // ==================== COPY TENANT PORTAL LINK ====================
 function copyTenantLink(tenantCode) {

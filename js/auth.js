@@ -360,6 +360,8 @@ async function handlePortalLogin(e) {
             activateTenantScope(tenantCode);
         }
 
+        // Set user info in appData (DO NOT call saveAppData here — cloud hasn't loaded yet!)
+        // The user object will be saved after showApp loads cloud data
         appData.user = {
             phone: normalizedPhone,
             name: sessionName,
@@ -367,7 +369,7 @@ async function handlePortalLogin(e) {
             tenantCode: tenantCode,
             loginTime: session.loginTime
         };
-        saveAppData(appData);
+        // saveAppData(appData) — REMOVED: was overwriting cloud data with empty local state
 
         if (loginBtn) loginBtn.classList.remove('loading');
         if (successMsg) {
@@ -500,6 +502,7 @@ async function handleHostPortalLogin(e) {
             activateTenantScope('HOST');
         }
 
+        // Set user info in appData (DO NOT call saveAppData here — cloud hasn't loaded yet!)
         appData.user = {
             phone: normalizedPhone,
             name: name,
@@ -509,7 +512,7 @@ async function handleHostPortalLogin(e) {
             tenantCode: 'HOST',
             loginTime: session.loginTime
         };
-        saveAppData(appData);
+        // saveAppData(appData) — REMOVED: was overwriting cloud data with empty local state
 
         if (loginBtn) loginBtn.classList.remove('loading');
         if (successMsg) {
