@@ -100,7 +100,7 @@ async function initFirebase() {
             try {
                 const authResult = await Promise.race([
                     firebase.auth().signInAnonymously(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 10000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 15000))
                 ]);
                 console.log('[TransitPay] Anonymous auth success ✅', authResult.user ? authResult.user.uid : '');
             } catch (authErr) {
@@ -123,7 +123,7 @@ async function initFirebase() {
         try {
             const testSnap = await Promise.race([
                 db.collection('config').doc('registry').get(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Connection test timeout')), 8000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Connection test timeout')), 20000))
             ]);
             isOnline = true;
             console.log('[TransitPay] Firestore connectivity verified ✅ (doc exists:', testSnap.exists, ')');
@@ -218,7 +218,7 @@ async function fsGetRegistry() {
         // Use a timeout to prevent hanging forever
         const snap = await Promise.race([
             getRegistryDocRef().get(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Registry fetch timeout (10s)')), 10000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Registry fetch timeout (20s)')), 20000))
         ]);
 
         if (snap.exists) {
@@ -282,7 +282,7 @@ async function fsGetAppData(tenantCode) {
     try {
         const snap = await Promise.race([
             getTenantDocRef(tenantCode).get(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('AppData fetch timeout (10s)')), 10000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error('AppData fetch timeout (20s)')), 20000))
         ]);
         if (snap.exists) {
             return snap.data();

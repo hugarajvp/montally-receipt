@@ -1129,6 +1129,10 @@
     border-left: 4px solid var(--danger-500);
 }
 
+.toast.warning {
+    border-left: 4px solid #f59e0b;
+}
+
 .toast.info {
     border-left: 4px solid var(--info-500);
 }

@@ -228,33 +228,47 @@ function showApp() {
     // CRITICAL: Fetch cloud data FIRST, then render dashboard
     const tenantCode = window._ACTIVE_TENANT_CODE || 'HOST';
 
-    // Show sync indicator while loading
-    showToast('🔄 Loading data from cloud...', 'info');
-
-    // Load cloud data, then refresh all UI
+    // Load cloud data with retry, then refresh all UI
     const loadAndRender = async () => {
-        // STEP 1: Load from cloud — this overwrites local with cloud data
+        // STEP 1: Load from cloud with up to 3 retries (handles slow mobile connections)
         let cloudLoaded = false;
-        if (typeof activateTenantScopeCloud === 'function') {
-            cloudLoaded = await activateTenantScopeCloud(tenantCode);
-            if (cloudLoaded) {
-                console.log('[App] ✅ Cloud data loaded for', tenantCode,
-                    '| receipts:', appData.receipts ? appData.receipts.length : 0,
-                    '| clients:', appData.clients ? appData.clients.length : 0);
-                showToast('✅ Data synced from cloud!', 'success');
-            } else {
-                console.warn('[App] ⚠️ Cloud load failed or returned no data. Using local cache.');
-                showToast('⚠️ Could not reach cloud. Showing local data.', 'warning');
+        const MAX_RETRIES = 3;
+        for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+            if (typeof activateTenantScopeCloud === 'function') {
+                cloudLoaded = await activateTenantScopeCloud(tenantCode);
+            }
+            if (cloudLoaded) break;
+            if (attempt < MAX_RETRIES) {
+                console.warn(`[App] Cloud load attempt ${attempt} failed, retrying in 3s...`);
+                await new Promise(r => setTimeout(r, 3000));
+                // Also re-try Firebase init if it wasn't ready
+                if (!window.firebaseReady && window._firebaseInitPromise) {
+                    await window._firebaseInitPromise;
+                }
             }
         }
 
-        // STEP 2: NOW it is safe to write the login audit log (cloud data is in appData)
+        if (cloudLoaded) {
+            console.log('[App] ✅ Cloud data loaded for', tenantCode,
+                '| receipts:', appData.receipts ? appData.receipts.length : 0,
+                '| clients:', appData.clients ? appData.clients.length : 0);
+            showToast('✅ Data synced from cloud!', 'success');
+        } else {
+            console.warn('[App] ⚠️ All cloud load attempts failed. Using local cache.');
+            // Only show warning if local cache is also empty
+            const hasLocalData = appData.receipts && appData.receipts.length > 0;
+            if (!hasLocalData) {
+                showToast('⚠️ Could not load data. Check your connection.', 'warning');
+            }
+        }
+
+        // STEP 2: Write login audit log after cloud data is in appData
         if (window._pendingLoginLog && typeof addAuditLog === 'function') {
             addAuditLog('login', 'auth', window._pendingLoginLog);
             window._pendingLoginLog = null;
         }
 
-        // STEP 3: Start real-time listener for live updates across PCs
+        // STEP 3: Start real-time listener for live updates across all PCs
         if (typeof startRealtimeSync === 'function') {
             startRealtimeSync(tenantCode);
         }
@@ -270,7 +284,7 @@ function showApp() {
         populateLocationDropdowns();
     };
 
-    // Render immediately with local/cached data first (so the page feels fast)
+    // Render immediately with local/cached data first (fast display)
     updateDashboard();
     loadReceipts();
     loadTrips();
@@ -280,10 +294,9 @@ function showApp() {
     populateClientDropdown();
     populateLocationDropdowns();
 
-    // Then fetch cloud data and re-render with real data
+    // Then fetch cloud data in background and re-render
     loadAndRender().catch(err => {
-        console.warn('[App] Cloud data load failed:', err.message);
-        showToast('⚠️ Sync failed. Check internet connection.', 'warning');
+        console.warn('[App] Cloud data load error:', err.message);
     });
 }
 
@@ -374,6 +387,7 @@ function showToast(message, type = 'info') {
     const icons = {
         success: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M5 9L8 12L13 6" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="9" cy="9" r="7.5" stroke="#22c55e" stroke-width="1.5"/></svg>',
         error: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M6 6L12 12M12 6L6 12" stroke="#ef4444" stroke-width="2" stroke-linecap="round"/><circle cx="9" cy="9" r="7.5" stroke="#ef4444" stroke-width="1.5"/></svg>',
+        warning: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M9 3L16 15H2L9 3z" stroke="#f59e0b" stroke-width="1.5" stroke-linejoin="round"/><path d="M9 8v3M9 13h.01" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/></svg>',
         info: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="7.5" stroke="#0ea5e9" stroke-width="1.5"/><path d="M9 8v4M9 6h.01" stroke="#0ea5e9" stroke-width="2" stroke-linecap="round"/></svg>'
     };
 
