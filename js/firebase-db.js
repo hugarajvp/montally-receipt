@@ -83,83 +83,129 @@ async function initFirebase() {
         }
         db = firebase.firestore();
 
-        // Enable long polling and disable fetch streams to bypass proxy/firewall issues
-        db.settings({
-            experimentalForceLongPolling: true,
-            useFetchStreams: false
-        });
+        // NO experimentalForceLongPolling — it breaks iOS Safari & mobile connections
+        // Use default WebSocket transport which works on all platforms
+        // Only fall back to long polling if WebSocket explicitly fails
 
-        // STEP 1: Skip IndexedDB persistence entirely.
-        // Persistence causes Firestore to get stuck in "offline" mode in Incognito
-        // and is unreliable across browsers. The app uses localStorage as its cache.
-        window._isIncognito = false; // Not needed anymore
-        console.log('[TransitPay] Persistence skipped (using localStorage cache instead)');
+        console.log('[TransitPay] Firestore initialized');
 
-        // STEP 3: AWAIT anonymous auth - this is CRITICAL
+        // Await anonymous auth — required for Firestore security rules
         if (firebase.auth) {
             try {
-                const authResult = await Promise.race([
+                await Promise.race([
                     firebase.auth().signInAnonymously(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 15000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 20000))
                 ]);
-                console.log('[TransitPay] Anonymous auth success ✅', authResult.user ? authResult.user.uid : '');
+                const user = firebase.auth().currentUser;
+                console.log('[TransitPay] Auth ✅ uid:', user ? user.uid : 'none');
+                window._firebaseAuthUid = user ? user.uid : null;
             } catch (authErr) {
-                console.warn('[TransitPay] Anonymous auth failed:', authErr.message);
+                console.warn('[TransitPay] Auth failed:', authErr.code, authErr.message);
+                window._firebaseAuthError = authErr.message;
             }
         }
 
-        // STEP 4: Force network enablement
-        if (typeof db.enableNetwork === 'function') {
-            try {
-                await db.enableNetwork();
-                console.log('[TransitPay] Network enabled ✅');
-            } catch (netErr) {
-                console.warn('[TransitPay] enableNetwork failed:', netErr.message);
-            }
-        }
-
-        // STEP 5: Verify connectivity with a quick test read
-        let isOnline = false;
+        // Force network on
         try {
-            const testSnap = await Promise.race([
+            await db.enableNetwork();
+        } catch (e) { /* ignore */ }
+
+        // Quick connectivity test — read registry doc
+        let isOnline = false;
+        let connectError = null;
+        try {
+            await Promise.race([
                 db.collection('config').doc('registry').get(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Connection test timeout')), 20000))
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout after 20s')), 20000))
             ]);
             isOnline = true;
-            console.log('[TransitPay] Firestore connectivity verified ✅ (doc exists:', testSnap.exists, ')');
+            console.log('[TransitPay] Firestore connected ✅');
         } catch (testErr) {
-            console.warn('[TransitPay] Firestore connectivity test failed:', testErr.message);
+            connectError = testErr.message;
+            console.warn('[TransitPay] Firestore connection failed:', testErr.code || '', testErr.message);
 
-            // RECOVERY: If stuck offline, try resetting the network
-            if (testErr.message && testErr.message.toLowerCase().includes('offline')) {
-                console.log('[TransitPay] Attempting network recovery...');
-                const resetOk = await resetFirestoreNetwork();
-                if (resetOk) {
-                    // Retry the test read after reset
-                    try {
-                        const retrySnap = await Promise.race([
-                            db.collection('config').doc('registry').get({ source: 'server' }),
-                            new Promise((_, reject) => setTimeout(() => reject(new Error('Retry timeout')), 8000))
-                        ]);
-                        isOnline = true;
-                        console.log('[TransitPay] Recovery successful! Firestore connected ✅');
-                    } catch (retryErr) {
-                        console.warn('[TransitPay] Recovery retry also failed:', retryErr.message);
-                    }
+            // Retry once with long polling if WebSocket failed
+            if (!isOnline) {
+                try {
+                    console.log('[TransitPay] Retrying with long polling...');
+                    // Can't change settings after init, so just try another read after a pause
+                    await new Promise(r => setTimeout(r, 3000));
+                    await db.enableNetwork();
+                    await Promise.race([
+                        db.collection('config').doc('registry').get(),
+                        new Promise((_, reject) => setTimeout(() => reject(new Error('Retry timeout')), 15000))
+                    ]);
+                    isOnline = true;
+                    connectError = null;
+                    console.log('[TransitPay] Connected on retry ✅');
+                } catch (retryErr) {
+                    connectError = retryErr.message;
+                    console.warn('[TransitPay] Retry also failed:', retryErr.message);
                 }
             }
         }
 
         window.firebaseReady = true;
         window._firebaseOnline = isOnline;
-        console.log('[TransitPay] Firebase initialized ✅ (online:', isOnline, ')');
+        window._firebaseConnectError = connectError;
+
+        // Show on-screen diagnostic on phone (helps debug)
+        _showFirebaseDiagnostic(isOnline, connectError);
+
+        console.log('[TransitPay] Firebase ready ✅ (online:', isOnline, ')');
 
     } catch (err) {
-        console.warn('[TransitPay] Firebase init failed, using localStorage fallback:', err);
+        console.warn('[TransitPay] Firebase init failed:', err.message);
         window.firebaseReady = false;
         window._firebaseOnline = false;
+        window._firebaseConnectError = err.message;
+        _showFirebaseDiagnostic(false, err.message);
     }
 }
+
+/**
+ * Shows a temporary on-screen banner with Firebase status.
+ * Visible on mobile where we can't open DevTools.
+ * Auto-hides after 8 seconds if connected, stays if failed.
+ */
+function _showFirebaseDiagnostic(isOnline, error) {
+    // Only show on first load, and only briefly if connected
+    const existing = document.getElementById('_fbDiag');
+    if (existing) existing.remove();
+
+    const banner = document.createElement('div');
+    banner.id = '_fbDiag';
+    banner.style.cssText = `
+        position:fixed; bottom:70px; left:50%; transform:translateX(-50%);
+        background:${isOnline ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)'};
+        border:1px solid ${isOnline ? '#22c55e' : '#ef4444'};
+        color:${isOnline ? '#86efac' : '#fca5a5'};
+        padding:0.5rem 1rem; border-radius:8px; font-size:0.75rem;
+        z-index:99999; text-align:center; max-width:90vw;
+        backdrop-filter:blur(10px); font-family:monospace;
+    `;
+
+    const uid = window._firebaseAuthUid;
+    if (isOnline) {
+        banner.textContent = `✅ Firebase connected | uid: ${uid ? uid.substring(0, 8) + '...' : 'none'}`;
+        setTimeout(() => banner.remove(), 6000);
+    } else {
+        banner.innerHTML = `❌ Firebase offline<br><small>${error || 'unknown error'}</small><br><small>uid: ${uid ? uid.substring(0, 8) + '...' : 'no auth'}</small>`;
+        // Keep visible so user can see the error — tap to dismiss
+        banner.onclick = () => banner.remove();
+        banner.title = 'Tap to dismiss';
+        setTimeout(() => banner.remove(), 30000);
+    }
+
+    // Wait for DOM to be ready
+    if (document.body) {
+        document.body.appendChild(banner);
+    } else {
+        document.addEventListener('DOMContentLoaded', () => document.body.appendChild(banner));
+    }
+}
+
+
 
 // function to retry init if failed
 async function ensureFirebase() {
