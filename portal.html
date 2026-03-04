@@ -1,15 +1,1846 @@
-ï»¿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=/portal">
-    <title>Redirecting...</title>
-    <script>window.location.replace("/portal");</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TransitPay | Portal</title>
+    <meta name="description"
+        content="TransitPay portal - Access your transport business dashboard as a tenant or host administrator.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <!-- Portal Login Styles -->
+    <link rel="stylesheet" href="css/portal.css">
+    <!-- CSS Modules for Main App -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/ui.css">
+    <link rel="stylesheet" href="css/reports.css">
 </head>
 
 <body>
-    <p>Redirecting to <a href="/portal">TransitPay Portal</a>...</p>
+    <!-- ==================== PORTAL LOGIN ==================== -->
+    <div id="portalLogin" class="page active">
+        <!-- Animated Background -->
+        <div class="portal-bg">
+            <div class="orb orb-1"></div>
+            <div class="orb orb-2"></div>
+            <div class="orb orb-3"></div>
+            <div class="grid-overlay"></div>
+        </div>
+
+        <!-- Main Container -->
+        <div class="portal-container">
+            <div class="login-card" id="loginCard">
+                <!-- Logo -->
+                <div class="login-logo">
+                    <div class="logo-icon">
+                        <svg width="32" height="32" viewBox="0 0 48 48" fill="none">
+                            <rect x="4" y="16" width="40" height="20" rx="4" fill="rgba(255,255,255,0.9)" />
+                            <circle cx="14" cy="38" r="4" fill="#fff" stroke="rgba(255,255,255,0.9)" stroke-width="2" />
+                            <circle cx="34" cy="38" r="4" fill="#fff" stroke="rgba(255,255,255,0.9)" stroke-width="2" />
+                            <rect x="8" y="10" width="12" height="8" rx="2" fill="rgba(255,255,255,0.7)" />
+                            <path d="M38 16 L44 16 L44 28 L40 32" stroke="rgba(255,255,255,0.9)" stroke-width="2"
+                                fill="none" />
+                        </svg>
+                    </div>
+                    <h1>TransitPay</h1>
+                    <p class="login-subtitle" id="portalSubtitle">Portal Access</p>
+                </div>
+
+                <!-- Tabs -->
+                <div class="portal-tabs">
+                    <button type="button" class="portal-tab active" id="tabTenant" onclick="switchTab('tenant')">
+                        <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                            <path d="M14 16v-1a3 3 0 00-3-3H7a3 3 0 00-3 3v1" stroke="currentColor" stroke-width="1.5"
+                                stroke-linecap="round" />
+                            <circle cx="9" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
+                        </svg>
+                        Tenant Login
+                        <span class="tab-badge tab-badge-tenant">Client</span>
+                    </button>
+                    <button type="button" class="portal-tab" id="tabHost" onclick="switchTab('host')">
+                        <svg width="15" height="15" viewBox="0 0 20 20" fill="none">
+                            <rect x="2" y="3" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.5" />
+                            <path d="M2 7h16" stroke="currentColor" stroke-width="1.5" />
+                            <circle cx="5" cy="5" r="1" fill="currentColor" />
+                            <circle cx="8" cy="5" r="1" fill="currentColor" />
+                        </svg>
+                        Host Login
+                        <span class="tab-badge tab-badge-host">Admin</span>
+                    </button>
+                </div>
+
+                <!-- Error Message -->
+                <div class="error-msg" id="errorMsg">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M8 5v3.5M8 10.5h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span id="errorText">Invalid credentials</span>
+                </div>
+
+                <!-- Success Message -->
+                <div class="success-msg" id="successMsg">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M5 8l2 2 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    <span id="successText">Login successful! Redirecting...</span>
+                </div>
+
+                <!-- ==================== TENANT LOGIN PANEL ==================== -->
+                <div class="form-panel active" id="tenantPanel">
+                    <form id="portalLoginForm" onsubmit="return handlePortalLogin(event)">
+                        <div class="form-group">
+                            <label for="tenantCodeInput">Tenant Code</label>
+                            <input type="text" id="tenantCodeInput" class="code-input" placeholder="e.g. DEMO" required
+                                autocomplete="off" maxlength="12">
+                        </div>
+                        <div class="form-group">
+                            <label for="phoneInput">Phone Number</label>
+                            <div class="phone-input-wrapper">
+                                <span class="phone-prefix">+</span>
+                                <input type="tel" id="phoneInput" placeholder="e.g. 60123456789" required
+                                    autocomplete="tel">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-login" id="tenantLoginBtn">
+                            <span>Access Tenant Portal</span>
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                <path d="M3.5 9H14.5M14.5 9L10 4.5M14.5 9L10 13.5" stroke="currentColor"
+                                    stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </button>
+                    </form>
+
+                    <div class="divider">
+                        <span>Secure Tenant Login</span>
+                    </div>
+
+                    <div class="login-footer">
+                        Enter the tenant code and phone number provided by your transport administrator.
+                    </div>
+                </div>
+
+                <!-- ==================== HOST ADMIN LOGIN PANEL ==================== -->
+                <div class="form-panel" id="hostPanel">
+                    <div class="info-box">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.2" />
+                            <path d="M8 7v4.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
+                            <circle cx="8" cy="5" r="0.8" fill="currentColor" />
+                        </svg>
+                        <p>Sign in as a Host Administrator to manage tenants, receipts, and the full TransitPay
+                            dashboard.</p>
+                    </div>
+
+                    <form id="hostLoginForm" onsubmit="return handleHostPortalLogin(event)">
+                        <div class="form-group">
+                            <label for="hostUsername">Username</label>
+                            <input type="text" id="hostUsername" placeholder="Enter your username" required
+                                autocomplete="username">
+                            <span class="input-hint">Your unique login username</span>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="hostName">Full Name</label>
+                                <input type="text" id="hostName" placeholder="e.g. Ahmad Rizal" required
+                                    autocomplete="name">
+                            </div>
+                            <div class="form-group">
+                                <label for="hostHostname">Hostname</label>
+                                <input type="text" id="hostHostname" placeholder="e.g. HQ-Server" required
+                                    autocomplete="off">
+                                <span class="input-hint">Device or server name</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="hostPhone">Phone Number</label>
+                            <div class="phone-input-wrapper">
+                                <span class="phone-prefix">+</span>
+                                <input type="tel" id="hostPhone" placeholder="e.g. 60123456789" required
+                                    autocomplete="tel">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-login host-btn" id="hostLoginBtn">
+                            <span>Sign In as Host Admin</span>
+                            <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                <rect x="3" y="4" width="12" height="10" rx="2" stroke="currentColor"
+                                    stroke-width="1.6" />
+                                <path d="M3 7h12" stroke="currentColor" stroke-width="1.6" />
+                                <circle cx="6" cy="5.5" r="0.6" fill="currentColor" />
+                                <circle cx="8" cy="5.5" r="0.6" fill="currentColor" />
+                            </svg>
+                        </button>
+                    </form>
+
+                    <div class="divider">
+                        <span>Host Administrator Access</span>
+                    </div>
+
+                    <div class="login-footer">
+                        Hosts have full access to the TransitPay admin dashboard.
+                    </div>
+                </div>
+
+                <!-- Security Badge -->
+                <div class="security-badge">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M8 1L2 4v4c0 3.5 2.5 6.5 6 7.5 3.5-1 6-4 6-7.5V4L8 1z" stroke="currentColor"
+                            stroke-width="1.2" fill="none" />
+                        <path d="M5.5 8l2 2 3-3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    <span>Your data is isolated and protected with tenant-level encryption</span>
+                </div>
+            </div>
+        </div>
+    </div><!-- end portalLogin -->
+
+    <!-- ==================== MAIN APP ==================== -->
+    <div id="mainApp" class="page">
+        <!-- Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon-sm">
+                        <svg width="28" height="28" viewBox="0 0 48 48" fill="none">
+                            <rect x="4" y="16" width="40" height="20" rx="4" fill="url(#grad1s)" />
+                            <circle cx="14" cy="38" r="4" fill="#fff" stroke="url(#grad1s)" stroke-width="2" />
+                            <circle cx="34" cy="38" r="4" fill="#fff" stroke="url(#grad1s)" stroke-width="2" />
+                            <defs>
+                                <linearGradient id="grad1s" x1="0" y1="0" x2="48" y2="48">
+                                    <stop offset="0%" stop-color="#6366f1" />
+                                    <stop offset="100%" stop-color="#8b5cf6" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                    </div>
+                    <span class="sidebar-title">TransitPay</span>
+                </div>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item active" data-page="dashboard" onclick="navigateTo('dashboard')" id="menuDashboard">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <rect x="2" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+                        <rect x="11" y="2" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+                        <rect x="2" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+                        <rect x="11" y="11" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                    <span>Dashboard</span>
+                </li>
+                <li class="menu-item" data-page="clients" onclick="navigateTo('clients')" id="menuClients">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M14 16v-1a3 3 0 00-3-3H7a3 3 0 00-3 3v1" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <circle cx="9" cy="7" r="3" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M17 16v-1a3 3 0 00-2-2.83M13 4.17a3 3 0 010 5.66" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                    <span>Clients</span>
+                </li>
+                <li class="menu-item" data-page="newReceipt" onclick="navigateTo('newReceipt')" id="menuNewReceipt">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M10 4V16M4 10H16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>New Receipt</span>
+                </li>
+                <li class="menu-item" data-page="trips" onclick="navigateTo('trips')" id="menuTrips">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M3 10C3 10 5 4 10 4C15 4 17 10 17 10C17 10 15 16 10 16C5 16 3 10 3 10Z"
+                            stroke="currentColor" stroke-width="1.5" />
+                        <circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                    <span>Trips</span>
+                </li>
+                <li class="menu-item" data-page="receipts" onclick="navigateTo('receipts')" id="menuReceipts">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path
+                            d="M5 2H15C15.5523 2 16 2.44772 16 3V17L13.5 15.5L11 17L8.5 15.5L6 17L3.5 15.5L2 17V3C2 2.44772 2.44772 2 3 2H5Z"
+                            stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                        <path d="M6 6H14M6 9H14M6 12H10" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" />
+                    </svg>
+                    <span>Receipts</span>
+                </li>
+                <li class="menu-item" data-page="reports" onclick="navigateTo('reports')" id="menuReports">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path
+                            d="M3 17V7L7 3H15C15.5523 3 16 3.44772 16 4V16C16 16.5523 15.5523 17 15 17H4C3.44772 17 3 16.5523 3 16Z"
+                            stroke="currentColor" stroke-width="1.5" />
+                        <path d="M7 3V7H3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M6 10H13M6 13H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>Reports</span>
+                </li>
+                <li class="menu-item" data-page="petrol" onclick="navigateTo('petrol')" id="menuPetrol">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M4 17V5a2 2 0 012-2h5a2 2 0 012 2v12" stroke="currentColor" stroke-width="1.5"
+                            stroke-linejoin="round" />
+                        <path d="M4 17h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <path d="M13 9l2-2 2 2v5a1 1 0 01-1 1h-1" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <rect x="6" y="5" width="5" height="4" rx="0.5" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                    <span>Petrol</span>
+                </li>
+                <li class="menu-item" data-page="monthlyBilling" onclick="navigateTo('monthlyBilling')"
+                    id="menuMonthlyBilling">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <rect x="2" y="3" width="16" height="15" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M2 7h16" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M6 2v3M14 2v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <path d="M6 11h8M6 14h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>Monthly Billing</span>
+                    <span id="unpaidBadge"
+                        style="background:#ef4444;color:#fff;font-size:0.65rem;font-weight:700;border-radius:99px;padding:1px 6px;margin-left:auto;"></span>
+                </li>
+                <li class="menu-item" data-page="grocery" onclick="navigateTo('grocery')" id="menuGrocery">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M3 3h2l2.5 9h9L19 7H6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <circle cx="9" cy="17" r="1.3" stroke="currentColor" stroke-width="1.5" />
+                        <circle cx="16" cy="17" r="1.3" stroke="currentColor" stroke-width="1.5" />
+                    </svg>
+                    <span>Grocery</span>
+                </li>
+                <!-- Email Invoice removed - replaced by WhatsApp -->
+                <div class="menu-divider"></div>
+                <!-- Host-only: Tenant Management -->
+                <li class="menu-item host-only-menu" data-page="tenants" onclick="navigateTo('tenants')"
+                    id="menuTenants" style="display:none;">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <rect x="2" y="3" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M2 7h16" stroke="currentColor" stroke-width="1.5" />
+                        <circle cx="5" cy="5" r="1" fill="currentColor" />
+                        <circle cx="8" cy="5" r="1" fill="currentColor" />
+                        <path d="M6 12h8M6 14.5h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>Tenant Management</span>
+                </li>
+                <li class="menu-item" data-page="users" onclick="navigateTo('users')" id="menuUsers">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="6" r="3.5" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M3 18v-1.5C3 13.46 5.69 11 9 11h2c3.31 0 6 2.46 6 5.5V18" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>User Accounts</span>
+                </li>
+
+                <li class="menu-item" data-page="settings" onclick="navigateTo('settings')" id="menuSettings">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M10 1v3M10 16v3M1 10h3M16 10h3M3.5 3.5l2 2M14.5 14.5l2 2M3.5 16.5l2-2M14.5 5.5l2-2"
+                            stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                    </svg>
+                    <span>Settings</span>
+                </li>
+                <li class="menu-item" data-page="dataImport" onclick="navigateTo('dataImport')" id="menuDataImport">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M3 14v3h14v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                        <path d="M10 3v9M7 9l3 3 3-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                    <span>Data Import</span>
+                </li>
+                <li class="menu-item" data-page="auditLog" onclick="navigateTo('auditLog')" id="menuAuditLog">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M4 3h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z"
+                            stroke="currentColor" stroke-width="1.5" />
+                        <path d="M7 7h6M7 10h6M7 13h4" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" />
+                    </svg>
+                    <span>Audit Log</span>
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="user-info" id="userInfo">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-details">
+                        <span class="user-phone" id="userPhone">+1234567890</span>
+                        <span class="user-role">Administrator</span>
+                    </div>
+                </div>
+                <button class="btn-logout" onclick="handleLogout()" id="logoutBtn">
+                    <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                        <path d="M6 15H4C3.44772 15 3 14.5523 3 14V4C3 3.44772 3.44772 3 4 3H6" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" />
+                        <path d="M10 9H16M16 9L13 6M16 9L13 12" stroke="currentColor" stroke-width="1.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Mobile Top Bar -->
+        <div class="mobile-topbar" id="mobileTopbar">
+            <button class="hamburger" id="hamburgerBtn" onclick="toggleSidebar()">
+                <span></span><span></span><span></span>
+            </button>
+            <span class="mobile-title">TransitPay</span>
+            <div class="mobile-avatar" id="mobileAvatar">U</div>
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="main-content" id="mainContent">
+
+            <!-- ===== DASHBOARD ===== -->
+            <section id="dashboardSection" class="content-section active">
+                <div class="section-header">
+                    <div>
+                        <h2>Dashboard</h2>
+                        <p class="section-desc">Your transport business at a glance</p>
+                    </div>
+                    <div class="header-actions">
+                        <select id="dashboardPeriod" onchange="updateDashboard()" class="select-input">
+                            <option value="thisMonth">This Month</option>
+                            <option value="lastMonth">Last Month</option>
+                            <option value="last3Months">Last 3 Months</option>
+                            <option value="thisYear">This Year</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-card-primary" id="statTotalEarnings" onclick="navigateTo('receipts')"
+                        style="cursor:pointer;" title="View Receipts">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Earnings</span>
+                            <span class="stat-value" id="totalEarningsVal">RM 0.00</span>
+                            <span class="stat-change positive" id="earningsChange">+0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-success" id="statTotalTrips" onclick="navigateTo('trips')"
+                        style="cursor:pointer;" title="View Trips">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Trips</span>
+                            <span class="stat-value" id="totalTripsVal">0</span>
+                            <span class="stat-change positive" id="tripsChange">+0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-warning" id="statMonthlyClients" onclick="navigateTo('clients')"
+                        style="cursor:pointer;" title="View Clients">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                                <circle cx="9" cy="7" r="4" stroke="currentColor" stroke-width="2" />
+                                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Monthly Clients</span>
+                            <span class="stat-value" id="monthlyClientsVal">0</span>
+                            <span class="stat-change positive" id="clientsChange">+0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-info" id="statReceiptsGenerated" onclick="navigateTo('receipts')"
+                        style="cursor:pointer;" title="View Receipts">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Receipts Generated</span>
+                            <span class="stat-value" id="receiptsGeneratedVal">0</span>
+                            <span class="stat-change positive" id="receiptsChange">+0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="border-left: 3px solid #f59e0b;cursor:pointer;" id="statPetrolSpend"
+                        onclick="navigateTo('petrol')" title="View Petrol Expenses">
+                        <div class="stat-icon" style="color:#f59e0b;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M4 20V8a2 2 0 012-2h7a2 2 0 012 2v12" stroke="currentColor" stroke-width="2"
+                                    stroke-linejoin="round" />
+                                <path d="M4 20h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                                <path d="M15 12l2.5-2.5L20 12v6a1 1 0 01-1 1h-1.5" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <rect x="7" y="8" width="5" height="4" rx="0.5" stroke="currentColor"
+                                    stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Petrol This Month</span>
+                            <span class="stat-value" id="dashPetrolVal">RM 0.00</span>
+                            <span class="stat-change positive" id="petrolChange">+0%</span>
+                        </div>
+                    </div>
+                    <div class="stat-card" style="border-left: 3px solid #34d399;cursor:pointer;" id="statGrocerySpend"
+                        onclick="navigateTo('grocery')" title="View Grocery Expenses">
+                        <div class="stat-icon" style="color:#34d399;">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M3 3h2l3 11h11l2-8H8" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                                <circle cx="10" cy="20" r="1.5" stroke="currentColor" stroke-width="2" />
+                                <circle cx="19" cy="20" r="1.5" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Grocery This Month</span>
+                            <span class="stat-value" id="dashGroceryVal">RM 0.00</span>
+                            <span class="stat-change positive" id="groceryChange">+0%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Earnings Overview</h3>
+                            <div class="chart-legend">
+                                <span class="legend-item"><span class="legend-dot monthly-dot"></span> Monthly</span>
+                            </div>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="earningsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Payment Distribution</h3>
+                        </div>
+                        <div class="chart-body chart-body-donut">
+                            <canvas id="paymentChart"></canvas>
+                            <div class="donut-center" id="donutCenter">
+                                <span class="donut-value">RM 0</span>
+                                <span class="donut-label">Total</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="recent-card">
+                    <div class="chart-header">
+                        <h3>Recent Transactions</h3>
+                        <button class="btn btn-ghost" onclick="navigateTo('receipts')">View All</button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="recentTable">
+                            <thead>
+                                <tr>
+                                    <th>Receipt #</th>
+                                    <th>Client</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTableBody">
+                                <tr class="empty-row">
+                                    <td colspan="6">
+                                        <div class="empty-state-mini">
+                                            <p>No transactions yet. Create your first receipt!</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== NEW RECEIPT ===== -->
+            <section id="newReceiptSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>New Receipt</h2>
+                        <p class="section-desc">Generate a professional receipt</p>
+                    </div>
+                </div>
+
+                <div class="payment-type-selector" style="grid-template-columns:1fr;max-width:320px;">
+                    <button class="type-btn active" id="typeMonthly" onclick="selectPaymentType('monthly')">
+                        <div class="type-icon">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+                                <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor"
+                                    stroke-width="1.5" />
+                                <path d="M3 9h18" stroke="currentColor" stroke-width="1.5" />
+                                <path d="M8 2v4M16 2v4" stroke="currentColor" stroke-width="1.5"
+                                    stroke-linecap="round" />
+                                <path d="M7 13h2M11 13h2M15 13h2M7 17h2M11 17h2" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" />
+                            </svg>
+                        </div>
+                        <span class="type-label">Monthly Payment</span>
+                        <span class="type-desc">Fixed monthly subscription</span>
+                    </button>
+                </div>
+
+                <!-- Receipt Form -->
+                <div class="receipt-form-card">
+                    <form id="receiptForm" onsubmit="return generateReceipt(event)">
+                        <!-- Client Quick Select -->
+                        <div class="client-select-bar">
+                            <div class="form-group" style="margin-bottom:0;flex:1;">
+                                <label for="clientSelect">Select Saved Client</label>
+                                <select id="clientSelect" onchange="onClientSelect()">
+                                    <option value="">-- Type manually or select a client --</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-outline" onclick="navigateTo('clients')"
+                                style="align-self:flex-end;">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Manage Clients
+                            </button>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="clientName">Client Name *</label>
+                                <input type="text" id="clientName" placeholder="Full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="clientPhone">Client Phone</label>
+                                <input type="tel" id="clientPhone" placeholder="Phone number">
+                            </div>
+                            <div class="form-group">
+                                <label for="receiptDate">Date *</label>
+                                <input type="date" id="receiptDate" required>
+                            </div>
+                        </div>
+
+                        <!-- Monthly Payment Fields -->
+                        <div id="monthlyFields" class="conditional-fields active">
+                            <h3 class="form-section-title">Monthly Payment Details</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="monthlyMonth">Month *</label>
+                                    <select id="monthlyMonth" required>
+                                        <option value="">Select Month</option>
+                                        <option value="January">January</option>
+                                        <option value="February">February</option>
+                                        <option value="March">March</option>
+                                        <option value="April">April</option>
+                                        <option value="May">May</option>
+                                        <option value="June">June</option>
+                                        <option value="July">July</option>
+                                        <option value="August">August</option>
+                                        <option value="September">September</option>
+                                        <option value="October">October</option>
+                                        <option value="November">November</option>
+                                        <option value="December">December</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="monthlyYear">Year *</label>
+                                    <input type="number" id="monthlyYear" placeholder="2026" min="2020" max="2040"
+                                        required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="monthlyAmount">Amount (RM) *</label>
+                                    <input type="number" id="monthlyAmount" placeholder="0.00" step="0.01" min="0"
+                                        required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Per-Trip Payment Fields (kept in DOM but hidden, for existing data compat) -->
+                        <div id="tripFields" class="conditional-fields" style="display:none;"></div>
+
+                        <!-- Payment Status -->
+                        <div class="form-group" style="margin-top: 1.5rem;">
+                            <label for="paymentStatus">Payment Status *</label>
+                            <div class="payment-status-group">
+                                <label class="status-radio-label">
+                                    <input type="radio" name="paymentStatus" id="paymentStatus" value="Paid" checked>
+                                    <span class="status-radio-btn status-paid">? PAID</span>
+                                </label>
+                                <label class="status-radio-label">
+                                    <input type="radio" name="paymentStatus" value="Unpaid">
+                                    <span class="status-radio-btn status-unpaid">? UNPAID</span>
+                                </label>
+                                <label class="status-radio-label">
+                                    <input type="radio" name="paymentStatus" value="Pending">
+                                    <span class="status-radio-btn status-pending">? PENDING</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-ghost" onclick="resetReceiptForm()">Clear Form</button>
+                            <button type="submit" class="btn btn-primary" id="generateReceiptBtn">
+                                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                                    <path d="M14 2H4a2 2 0 00-2 2v12l3-2 3 2 3-2 3 2V4a2 2 0 00-2-2z"
+                                        stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
+                                </svg>
+                                Generate Receipt
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ===== TRIPS ===== -->
+            <section id="tripsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Trip Management</h2>
+                        <p class="section-desc">Track and manage all your trips</p>
+                    </div>
+                    <div class="header-actions">
+                        <select id="tripFilterMonth" onchange="filterTrips()" class="select-input">
+                            <option value="all">All Months</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="navigateTo('newReceipt'); selectPaymentType('trip');">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                    stroke-linecap="round" />
+                            </svg>
+                            Add Trip
+                        </button>
+                    </div>
+                </div>
+                <div class="table-card">
+                    <div class="table-wrapper">
+                        <table class="data-table" id="tripsTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Client</th>
+                                    <th>From</th>
+                                    <th>To</th>
+                                    <th>Amount</th>
+                                    <th>Receipt #</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tripsTableBody">
+                                <tr class="empty-row">
+                                    <td colspan="6">
+                                        <div class="empty-state-mini">
+                                            <p>No trips recorded yet.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== RECEIPTS LIST ===== -->
+            <section id="receiptsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>All Receipts</h2>
+                        <p class="section-desc">View and manage all generated receipts</p>
+                    </div>
+                    <div class="header-actions">
+                        <select id="receiptFilter" onchange="filterReceipts()" class="select-input">
+                            <option value="all">All</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="receipts-grid" id="receiptsGrid">
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                                <rect x="12" y="6" width="40" height="52" rx="4" stroke="currentColor" stroke-width="2"
+                                    opacity="0.3" />
+                                <path d="M22 20h20M22 28h20M22 36h12" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" opacity="0.3" />
+                            </svg>
+                        </div>
+                        <h3>No Receipts Yet</h3>
+                        <p>Start by creating your first receipt</p>
+                        <button class="btn btn-primary" onclick="navigateTo('newReceipt')">Create Receipt</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== REPORTS ===== -->
+            <section id="reportsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Monthly Reports</h2>
+                        <p class="section-desc">Generate and download end-of-month summaries</p>
+                    </div>
+                </div>
+                <div class="report-controls">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="reportMonth">Month</label>
+                            <select id="reportMonth" class="select-input">
+                                <option value="0">January</option>
+                                <option value="1">February</option>
+                                <option value="2">March</option>
+                                <option value="3">April</option>
+                                <option value="4">May</option>
+                                <option value="5">June</option>
+                                <option value="6">July</option>
+                                <option value="7">August</option>
+                                <option value="8">September</option>
+                                <option value="9">October</option>
+                                <option value="10">November</option>
+                                <option value="11">December</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="reportYear">Year</label>
+                            <input type="number" id="reportYear" value="2026" min="2020" max="2040"
+                                class="select-input">
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:flex-end;">
+                            <button class="btn btn-primary" onclick="generateMonthlyReport()" id="genReportBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M14 10v3a1 1 0 01-1 1H3a1 1 0 01-1-1v-3M8 2v9M5 8l3 3 3-3"
+                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                                Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div id="reportContent" class="report-content" style="display:none;"></div>
+            </section>
+
+            <!-- ===== CLIENTS MANAGEMENT ===== -->
+            <section id="clientsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Client Management</h2>
+                        <p class="section-desc">Add and manage your transport clients</p>
+                    </div>
+                </div>
+
+                <!-- Add / Edit Client Form -->
+                <div class="receipt-form-card" style="margin-bottom: 2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Add New Client</h3>
+                    <form id="clientForm" onsubmit="return saveClient(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="newClientName">Full Name *</label>
+                                <input type="text" id="newClientName" placeholder="Client full name" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newClientPhone">Phone Number *</label>
+                                <input type="tel" id="newClientPhone" placeholder="Phone number" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newClientEmail">Email</label>
+                                <input type="email" id="newClientEmail" placeholder="client@email.com">
+                            </div>
+                            <div class="form-group">
+                                <label for="newClientAddress">Address</label>
+                                <input type="text" id="newClientAddress" placeholder="Home or pickup address">
+                            </div>
+                            <div class="form-group">
+                                <label for="newClientRoute">Default Route</label>
+                                <input type="text" id="newClientRoute" placeholder="e.g., Home to Office">
+                            </div>
+                            <div class="form-group">
+                                <label for="newClientMonthlyRate">Monthly Rate (RM)</label>
+                                <input type="number" id="newClientMonthlyRate" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="newClientNotes">Notes</label>
+                                <input type="text" id="newClientNotes" placeholder="Additional notes">
+                            </div>
+                        </div>
+                        <input type="hidden" id="editingClientId" value="">
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-ghost" onclick="clearClientForm()">Clear</button>
+                            <button type="submit" class="btn btn-primary" id="saveClientBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Add Client
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Clients List -->
+                <div class="table-card">
+                    <div class="chart-header">
+                        <h3>All Clients (<span id="clientCount">0</span>)</h3>
+                        <input type="text" id="clientSearch" placeholder="Search clients..." oninput="loadClients()"
+                            style="max-width:250px;">
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="clientsTable">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Address</th>
+                                    <th>Route</th>
+                                    <th>Monthly Rate</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientsTableBody">
+                                <tr class="empty-row">
+                                    <td colspan="6">
+                                        <div class="empty-state-mini">
+                                            <p>No clients added yet. Add your first client above!</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ===== PETROL EXPENSES ===== -->
+            <section id="petrolSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Petrol Expenses</h2>
+                        <p class="section-desc">Track monthly fuel costs and upload receipts</p>
+                    </div>
+                </div>
+
+                <!-- Petrol Dashboard -->
+                <div class="stats-grid" style="margin-bottom:2rem;">
+                    <div class="stat-card stat-card-primary">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M4 20V8a2 2 0 012-2h7a2 2 0 012 2v12" stroke="currentColor" stroke-width="2"
+                                    stroke-linejoin="round" />
+                                <path d="M4 20h11" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                                <path d="M15 12l2.5-2.5L20 12v6a1 1 0 01-1 1h-1.5" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <rect x="7" y="8" width="5" height="4" rx="0.5" stroke="currentColor"
+                                    stroke-width="2" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">This Month Petrol</span>
+                            <span class="stat-value" id="petrolThisMonth">RM 0.00</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-warning">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Petrol Spent</span>
+                            <span class="stat-value" id="petrolTotalSpent">RM 0.00</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-success">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Receipts Uploaded</span>
+                            <span class="stat-value" id="petrolReceiptCount">0</span>
+                        </div>
+                    </div>
+                    <div class="stat-card stat-card-info">
+                        <div class="stat-icon">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                <path d="M3 3v18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                                <path d="M7 16l4-4 4 4 5-5" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Avg Monthly Petrol</span>
+                            <span class="stat-value" id="petrolAvgMonthly">RM 0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Petrol Chart -->
+                <div class="chart-card" style="margin-bottom:2rem;">
+                    <div class="chart-header">
+                        <h3>Monthly Petrol Spending</h3>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="petrolChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Add Petrol Expense Form -->
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Log Petrol Expense</h3>
+                    <form id="petrolForm" onsubmit="return savePetrolExpense(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="petrolDate">Date *</label>
+                                <input type="date" id="petrolDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="petrolAmount">Amount (RM) *</label>
+                                <input type="number" id="petrolAmount" placeholder="0.00" step="0.01" min="0" required>
+                            </div>
+                            <!-- Liters removed -->
+                            <input type="hidden" id="petrolLiters" value="0">
+                            <div class="form-group">
+                                <!-- Car plate removed -->
+                                <select id="petrolCarPlate" style="display:none;">
+                                    <option value="">-- Select Car --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <!-- Notes removed -->
+                        <input type="hidden" id="petrolNotes" value="">
+                        <input type="hidden" id="editingPetrolId" value="">
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-ghost" onclick="clearPetrolForm()">Clear</button>
+                            <button type="submit" class="btn btn-primary" id="savePetrolBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Log Expense
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Petrol Expenses List -->
+                <div class="table-card">
+                    <div class="chart-header">
+                        <h3>Petrol History (<span id="petrolCount">0</span>)</h3>
+                        <select id="petrolFilterMonth" onchange="loadPetrolExpenses()" class="select-input">
+                            <option value="all">All Months</option>
+                        </select>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="petrolTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Receipt</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="petrolTableBody">
+                                <tr class="empty-row">
+                                    <td colspan="4">
+                                        <div class="empty-state-mini">
+                                            <p>No petrol expenses logged yet.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== USER ACCOUNTS ===== -->
+            <section id="usersSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>User Accounts</h2>
+                        <p class="section-desc">Manage who can log in and their roles</p>
+                    </div>
+                    <div class="header-actions">
+                        <span class="badge badge-admin" id="userCount" style="font-size:0.8rem;padding:0.4rem 0.8rem;">0
+                            Users</span>
+                    </div>
+                </div>
+
+                <!-- Role Summary -->
+                <div class="perm-role-summary-bar" id="userPermSummaryList"
+                    style="display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;"></div>
+
+                <!-- Add/Edit User Form -->
+                <div class="receipt-form-card" style="margin-bottom:2rem;" data-perm-module="users"
+                    data-perm-action="create">
+                    <h3 class="form-section-title" id="userFormTitle" style="margin-top:0;">Add New User</h3>
+                    <form id="userForm" onsubmit="return saveUser(event)">
+                        <input type="hidden" id="editingUserId" value="">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="newUserName">Full Name *</label>
+                                <input type="text" id="newUserName" placeholder="e.g. Ahmad Rizal" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserPhone">Phone Number *</label>
+                                <div class="phone-input-wrapper">
+                                    <span class="phone-prefix">+</span>
+                                    <input type="tel" id="newUserPhone" placeholder="e.g. 60123456789" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserRole">Role *</label>
+                                <select id="newUserRole">
+                                    <option value="Admin">Admin — Full access</option>
+                                    <option value="Operator" selected>Operator — Can add/edit</option>
+                                    <option value="Viewer">Viewer — Read only</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="newUserStatus">Status</label>
+                                <select id="newUserStatus">
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-actions" style="margin-top:1.25rem;">
+                            <button type="button" class="btn btn-ghost" onclick="clearUserForm()">Clear</button>
+                            <button type="submit" class="btn btn-primary" id="saveUserBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Add User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Role Description Cards -->
+                <div class="perm-role-grid" style="margin-bottom:2rem;">
+                    <div class="perm-role-card" style="border-left:3px solid #6366f1;">
+                        <div class="perm-role-header">
+                            <span class="perm-role-badge" style="background:#6366f120;color:#6366f1;">Admin</span>
+                            <span class="perm-locked-tag">?? Full Access</span>
+                        </div>
+                        <p class="perm-role-desc">Can do everything — create, edit, delete records, manage users and
+                            settings.</p>
+                    </div>
+                    <div class="perm-role-card" style="border-left:3px solid #10b981;">
+                        <div class="perm-role-header">
+                            <span class="perm-role-badge" style="background:#10b98120;color:#10b981;">Operator</span>
+                        </div>
+                        <p class="perm-role-desc">Can add and edit records. Cannot delete or access settings.
+                            Permissions are customisable.</p>
+                    </div>
+                    <div class="perm-role-card" style="border-left:3px solid #f59e0b;">
+                        <div class="perm-role-header">
+                            <span class="perm-role-badge" style="background:#f59e0b20;color:#f59e0b;">Viewer</span>
+                        </div>
+                        <p class="perm-role-desc">Read-only access to dashboards and reports. Cannot create or modify
+                            anything.</p>
+                    </div>
+                </div>
+
+                <!-- Users Table -->
+                <div class="table-card">
+                    <div class="chart-header">
+                        <h3>All Users (<span id="usersTableCount">0</span>)</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ===== MONTHLY BILLING ===== -->
+            <section id="monthlyBillingSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Monthly Billing</h2>
+                        <p class="section-desc">Auto-generate receipts for all clients and track unpaid balances</p>
+                    </div>
+                </div>
+
+                <!-- Generate Bills Panel -->
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Generate Monthly Receipts</h3>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem;">Select a month and click
+                        Generate to create <strong>PENDING</strong> receipts for all clients who have a Monthly Rate
+                        set. Receipts that already exist for that month will be skipped.</p>
+                    <div class="form-grid" style="align-items:flex-end;">
+                        <div class="form-group">
+                            <label for="billingMonth">Month</label>
+                            <select id="billingMonth" class="select-input">
+                                <option value="January">January</option>
+                                <option value="February">February</option>
+                                <option value="March">March</option>
+                                <option value="April">April</option>
+                                <option value="May">May</option>
+                                <option value="June">June</option>
+                                <option value="July">July</option>
+                                <option value="August">August</option>
+                                <option value="September">September</option>
+                                <option value="October">October</option>
+                                <option value="November">November</option>
+                                <option value="December">December</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="billingYear">Year</label>
+                            <input type="number" id="billingYear" value="2026" min="2020" max="2040"
+                                class="select-input">
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="btn btn-primary" onclick="generateMonthlyBills()"
+                                id="generateBillsBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Generate Bills
+                            </button>
+                        </div>
+                    </div>
+                    <div
+                        style="padding:0.75rem 1rem;background:rgba(99,102,241,0.08);border-radius:8px;margin-top:0.5rem;font-size:0.82rem;color:var(--text-muted);">
+                        ?? <strong>Tip:</strong> Make sure each client has a <strong>Monthly Rate</strong> set under the
+                        Clients section first.
+                    </div>
+                </div>
+
+                <!-- Unpaid Summary -->
+                <div class="receipt-form-card">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
+                        <h3 class="form-section-title" style="margin:0;">Unpaid / Pending Summary</h3>
+                        <span
+                            style="background:rgba(239,68,68,0.12);color:#fca5a5;padding:0.25rem 0.75rem;border-radius:99px;font-size:0.8rem;font-weight:700;"
+                            id="unpaidCount">0</span>
+                    </div>
+                    <div id="unpaidSummaryList"></div>
+                </div>
+            </section>
+
+            <!-- ===== SETTINGS ===== -->
+            <section id="settingsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Settings</h2>
+                        <p class="section-desc">Application settings</p>
+                    </div>
+                </div>
+                <div class="receipt-form-card">
+                    <p style="color:var(--text-muted);text-align:center;padding:2rem;">Settings are managed
+                        automatically. No configuration needed.</p>
+                </div>
+                <!-- Hidden elements needed by JS -->
+                <div style="display:none;">
+                    <input type="text" id="newLocationName">
+                    <div id="locationsList"></div>
+                    <input type="text" id="newCarPlate">
+                    <div id="carPlatesList"></div>
+                </div>
+            </section>
+
+            <!-- ===== WHATSAPP INVOICING ===== -->
+            <section id="emailSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>?? WhatsApp Invoice</h2>
+                        <p class="section-desc">Send payment reminders to clients via WhatsApp</p>
+                    </div>
+                </div>
+
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Send WhatsApp Reminder</h3>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem;">Select a client and month
+                        below. Click <strong>Open WhatsApp</strong> to send a payment reminder directly to their
+                        WhatsApp.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="waClient">Client</label>
+                            <select id="waClient" class="select-input" onchange="updateWaPreview()">
+                                <option value="">-- Select Client --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="waMonth">Month</label>
+                            <select id="waMonth" class="select-input" onchange="updateWaPreview()">
+                                <option value="January">January</option>
+                                <option value="February">February</option>
+                                <option value="March">March</option>
+                                <option value="April">April</option>
+                                <option value="May">May</option>
+                                <option value="June">June</option>
+                                <option value="July">July</option>
+                                <option value="August">August</option>
+                                <option value="September">September</option>
+                                <option value="October">October</option>
+                                <option value="November">November</option>
+                                <option value="December">December</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="waYear">Year</label>
+                            <input type="number" id="waYear" value="2026" min="2020" max="2040" class="select-input"
+                                oninput="updateWaPreview()">
+                        </div>
+                    </div>
+                    <!-- Message preview -->
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label>Message Preview</label>
+                        <textarea id="waMessagePreview" rows="6"
+                            style="width:100%;padding:0.85rem;border-radius:var(--radius-md);border:1.5px solid var(--border-color);background:rgba(37,211,102,0.05);color:var(--text-primary);font-family:var(--font-sans);font-size:0.88rem;resize:vertical;"
+                            placeholder="Select a client to preview the message..."></textarea>
+                    </div>
+                    <div class="form-actions" style="margin-top:1rem;">
+                        <button type="button" class="btn btn-primary" onclick="sendWhatsApp()"
+                            style="background:linear-gradient(135deg,#25d366,#128c7e);">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path
+                                    d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                            </svg>
+                            Open WhatsApp
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Bulk WhatsApp -->
+                <div class="receipt-form-card">
+                    <h3 class="form-section-title" style="margin-top:0;">Send to All Unpaid Clients</h3>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1.5rem;">Opens WhatsApp for each
+                        client who has a PENDING or UNPAID receipt. You'll need to send each one manually.</p>
+                    <div class="form-grid" style="align-items:flex-end;">
+                        <div class="form-group">
+                            <label for="waBulkMonth">Month</label>
+                            <select id="waBulkMonth" class="select-input">
+                                <option value="January">January</option>
+                                <option value="February">February</option>
+                                <option value="March">March</option>
+                                <option value="April">April</option>
+                                <option value="May">May</option>
+                                <option value="June">June</option>
+                                <option value="July">July</option>
+                                <option value="August">August</option>
+                                <option value="September">September</option>
+                                <option value="October">October</option>
+                                <option value="November">November</option>
+                                <option value="December">December</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="waBulkYear">Year</label>
+                            <input type="number" id="waBulkYear" value="2026" min="2020" max="2040"
+                                class="select-input">
+                        </div>
+                        <div class="form-group">
+                            <button type="button" class="btn btn-primary" onclick="sendBulkWhatsApp()"
+                                style="background:linear-gradient(135deg,#25d366,#128c7e);">
+                                ?? Send Reminders
+                            </button>
+                        </div>
+                    </div>
+                    <div id="waBulkResult" style="margin-top:1rem;"></div>
+                </div>
+            </section>
+
+            <!-- ===== DATA IMPORT ===== -->
+            <section id="dataImportSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Data Import</h2>
+                        <p class="section-desc">Upload old data for record keeping</p>
+                    </div>
+                </div>
+
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Import Old Data (CSV)</h3>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:1rem;">Upload a CSV file
+                        containing your old receipts or petrol data. Download the sample template below to see the
+                        correct format.</p>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="importType">Data Type</label>
+                            <select id="importType">
+                                <option value="receipts">Transport Receipts</option>
+                                <option value="petrol">Petrol Expenses</option>
+                                <option value="grocery">Grocery</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex;align-items:flex-end;gap:0.5rem;">
+                            <button type="button" class="btn btn-outline" onclick="downloadSampleCSV()">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M3 10v3h10v-3" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M8 2v7M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                Download Sample
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top:1rem;">
+                        <label>Upload CSV File</label>
+                        <div class="file-upload-area" id="importDropZone">
+                            <input type="file" id="importFileInput" accept=".csv" onchange="handleImportFile(event)"
+                                style="display:none;">
+                            <div class="file-upload-content"
+                                onclick="document.getElementById('importFileInput').click()">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"
+                                        stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                    <polyline points="14 2 14 8 20 8" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M12 18v-6M9 15l3-3 3 3" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <p>Click to upload CSV file</p>
+                                <span>CSV format only</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="importPreview" style="display:none;margin-top:1rem;"></div>
+                    <div class="form-actions" style="margin-top:1.5rem;">
+                        <button type="button" class="btn btn-primary" onclick="confirmImport()" id="confirmImportBtn"
+                            style="display:none;">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 8l4 4 6-8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                            Confirm Import
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sample Format Info -->
+                <div class="receipt-form-card">
+                    <h3 class="form-section-title" style="margin-top:0;">CSV Format Guide</h3>
+                    <div style="margin-bottom:1.5rem;">
+                        <h4 style="color:var(--primary-400);margin-bottom:0.5rem;font-size:0.85rem;">Transport Receipts
+                            CSV Columns:</h4>
+                        <code
+                            style="display:block;background:var(--surface-color);padding:1rem;border-radius:var(--radius-md);font-size:0.8rem;color:var(--text-secondary);line-height:1.8;overflow-x:auto;white-space:pre;">date,clientName,clientPhone,clientAddress,type,amount,route,paymentMethod,notes
+2025-01-15,Ahmad bin Ali,+60123456789,Jalan Sultan,monthly,500.00,Kuala Lumpur ? Shah Alam,Cash,January payment
+2025-01-20,Siti Aminah,+60129876543,Taman Melawati,trip,35.00,Ampang ? KLIA,Bank Transfer,Airport trip</code>
+                    </div>
+                    <div style="margin-top:1.5rem;">
+                        <h4 style="color:var(--primary-400);margin-bottom:0.5rem;font-size:0.85rem;">?? Grocery CSV
+                            Columns:</h4>
+                        <code
+                            style="display:block;background:var(--surface-color);padding:1rem;border-radius:var(--radius-md);font-size:0.8rem;color:var(--text-secondary);line-height:1.8;overflow-x:auto;white-space:pre;">date,item,amount,payment
+2025-01-10,Rice,25.50,Visa
+2025-01-12,Chicken,18.90,Cash
+2025-01-15,Vegetables,12.00,Aremex</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ===== GROCERY TRACKER ===== -->
+            <section id="grocerySection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>?? Grocery Tracker</h2>
+                        <p class="section-desc">Track household grocery spending</p>
+                    </div>
+                    <div class="header-actions">
+                        <select id="groceryFilterMonth" onchange="loadGroceries()" class="select-input">
+                            <option value="all">All Months</option>
+                        </select>
+                        <button class="btn btn-outline" onclick="printGroceryReport()">
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                <path d="M4 6V2h8v4M4 11H2V7h12v4h-2M4 11v3h8v-3" stroke="currentColor"
+                                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Print Report
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Add Item Form -->
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 class="form-section-title" style="margin-top:0;">Add Grocery Item</h3>
+                    <form id="groceryForm" onsubmit="return saveGrocery(event)">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="groceryDate">Date *</label>
+                                <input type="date" id="groceryDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="groceryItem">Item / Description *</label>
+                                <input type="text" id="groceryItem" placeholder="Grocery" value="Grocery" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="groceryAmount">Amount (RM) *</label>
+                                <input type="number" id="groceryAmount" placeholder="0.00" step="0.01" min="0" required>
+                            </div>
+                        </div>
+                        <!-- Payment Method -->
+                        <div class="form-group" style="margin-top:0.5rem;">
+                            <label>Payment Method *</label>
+                            <div class="payment-status-group">
+                                <label class="status-radio-label">
+                                    <input type="radio" name="groceryPayment" id="payVisa" value="Visa" checked>
+                                    <span class="status-radio-btn" style="border-color:rgba(99,102,241,0.4);">??
+                                        Visa</span>
+                                </label>
+                                <label class="status-radio-label">
+                                    <input type="radio" name="groceryPayment" value="Aremex">
+                                    <span class="status-radio-btn" style="border-color:rgba(245,158,11,0.4);">??
+                                        Aremex</span>
+                                </label>
+                                <label class="status-radio-label">
+                                    <input type="radio" name="groceryPayment" value="Cash">
+                                    <span class="status-radio-btn" style="border-color:rgba(34,197,94,0.4);">??
+                                        Cash</span>
+                                </label>
+                            </div>
+                        </div>
+                        <!-- Notes removed -->
+                        <input type="hidden" id="groceryNotes" value="">
+                        <div class="form-actions" style="margin-top:1.25rem;">
+                            <button type="button" class="btn btn-ghost" onclick="clearGroceryForm()">Clear</button>
+                            <button type="submit" class="btn btn-primary">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Add Item
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Grocery List -->
+                <div class="table-card">
+                    <div class="chart-header">
+                        <h3>Grocery History</h3>
+                        <span style="font-family:var(--font-mono);font-weight:700;color:var(--primary-300);"
+                            id="groceryTotal">RM 0.00</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Item</th>
+                                    <th>Payment</th>
+                                    <th>Amount</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="groceryTableBody">
+                                <tr class="empty-row">
+                                    <td colspan="5">
+                                        <div class="empty-state-mini">
+                                            <p>No grocery entries yet. Add your first item above!</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="auditLogSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Audit Log</h2>
+                        <p class="section-desc">Track all actions and changes in the system</p>
+                    </div>
+                    <div class="header-actions" style="display:flex;gap:0.5rem;">
+                        <button class="btn btn-outline" onclick="exportAuditLog()" style="font-size:0.8rem;">
+                            <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+                                <path d="M3 10v3h10v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                                <path d="M8 2v7M5 7l3 3 3-3" stroke="currentColor" stroke-width="1.5"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            Export CSV
+                        </button>
+                        <button class="btn btn-ghost" onclick="clearAuditLog()"
+                            style="font-size:0.8rem;color:var(--text-muted);">
+                            Clear Log
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="receipt-form-card" style="margin-bottom:1.5rem;padding:1rem 1.25rem;">
+                    <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end;">
+                        <div class="form-group" style="margin:0;min-width:140px;">
+                            <label style="font-size:0.75rem;margin-bottom:0.3rem;">Module</label>
+                            <select id="auditFilterModule" onchange="loadAuditLog()" class="select-input"
+                                style="font-size:0.8rem;height:34px;">
+                                <option value="all">All Modules</option>
+                                <option value="receipt">Receipts</option>
+                                <option value="client">Clients</option>
+                                <option value="petrol">Petrol</option>
+                                <option value="user">Users</option>
+                                <option value="tenant">Tenants</option>
+                                <option value="settings">Settings</option>
+                                <option value="auth">Authentication</option>
+                                <option value="import">Data Import</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;min-width:140px;">
+                            <label style="font-size:0.75rem;margin-bottom:0.3rem;">Action</label>
+                            <select id="auditFilterAction" onchange="loadAuditLog()" class="select-input"
+                                style="font-size:0.8rem;height:34px;">
+                                <option value="all">All Actions</option>
+                                <option value="created">Created</option>
+                                <option value="updated">Updated</option>
+                                <option value="deleted">Deleted</option>
+                                <option value="imported">Imported</option>
+                                <option value="login">Login</option>
+                                <option value="logout">Logout</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin:0;flex:1;min-width:180px;">
+                            <label style="font-size:0.75rem;margin-bottom:0.3rem;">Search</label>
+                            <input type="text" id="auditSearch" placeholder="Search descriptions..."
+                                oninput="loadAuditLog()" style="font-size:0.8rem;height:34px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Log Table -->
+                <div class="table-card">
+                    <div class="chart-header">
+                        <h3>Activity Log (<span id="auditLogCount">0</span> entries)</h3>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table" id="auditLogTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:120px;">Time</th>
+                                    <th style="width:90px;">Action</th>
+                                    <th style="width:110px;">Module</th>
+                                    <th>Description</th>
+                                    <th style="width:130px;">User</th>
+                                </tr>
+                            </thead>
+                            <tbody id="auditLogBody">
+                                <tr class="empty-row">
+                                    <td colspan="5">
+                                        <div class="empty-state-mini">
+                                            <p>No audit log entries yet. Actions will be recorded automatically.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ==================== TENANT MANAGEMENT (HOST ONLY) ==================== -->
+            <section id="tenantsSection" class="content-section">
+                <div class="section-header">
+                    <div>
+                        <h2>Tenant Management</h2>
+                        <p class="section-desc">Create and manage tenant accounts. Each tenant has isolated data.</p>
+                    </div>
+                    <div class="header-actions">
+                        <span class="badge badge-admin" id="totalTenantsCount"
+                            style="font-size:0.8rem;padding:0.4rem 0.8rem;">0
+                            Tenants</span>
+                    </div>
+                </div>
+
+                <!-- Tenant Info Banner -->
+                <div class="tenant-info-banner">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5" />
+                        <path d="M10 9v4M10 7h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    </svg>
+                    <div>
+                        <strong>Multi-Tenant Mode Active</strong>
+                        <p>Each tenant gets a unique code and phone login. Tenants can only see their own data —
+                            dashboards, receipts, clients, and reports are fully isolated.</p>
+                    </div>
+                </div>
+
+                <!-- Add Tenant Form -->
+                <div class="receipt-form-card" style="margin-bottom:2rem;">
+                    <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem;color:var(--text-accent);">
+                        <span id="tenantFormTitle">Add New Tenant</span>
+                    </h3>
+                    <form onsubmit="return saveTenant(event)">
+                        <input type="hidden" id="editingTenantId" value="">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="tenantCode">Tenant Code</label>
+                                <input type="text" id="tenantCode" placeholder="e.g. TPY-001"
+                                    style="text-transform:uppercase;font-family:var(--font-mono);letter-spacing:0.08em;"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tenantName">Business / Client Name</label>
+                                <input type="text" id="tenantName" placeholder="e.g. Acme Transport Sdn Bhd" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tenantPhone">Login Phone Number</label>
+                                <div class="phone-input-wrapper">
+                                    <span class="phone-prefix">+</span>
+                                    <input type="tel" id="tenantPhone" placeholder="Phone number for login" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="tenantStatus">Status</label>
+                                <select id="tenantStatus">
+                                    <option value="Active">Active</option>
+                                    <option value="Suspended">Suspended</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="grid-column:1/-1;">
+                                <label for="tenantNotes">Notes (optional)</label>
+                                <textarea id="tenantNotes" rows="2"
+                                    placeholder="Additional notes about this tenant..."></textarea>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:0.75rem;margin-top:1rem;">
+                            <button type="submit" class="btn btn-primary" id="saveTenantBtn">
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                                    <path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5"
+                                        stroke-linecap="round" />
+                                </svg>
+                                Add Tenant
+                            </button>
+                            <button type="button" class="btn btn-outline" onclick="clearTenantForm()">Clear</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tenant Cards Grid -->
+                <div id="tenantCardsGrid" class="tenant-cards-grid">
+                    <!-- Filled dynamically -->
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ===== RECEIPT PREVIEW MODAL ===== -->
+    <div class="modal-overlay" id="receiptModal">
+        <div class="modal-content receipt-modal">
+            <div class="modal-header-bar">
+                <h3>Receipt Preview</h3>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" onclick="printReceipt()" id="printReceiptBtn">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M4 6V1h8v5M4 12H2V7h12v5h-2" stroke="currentColor" stroke-width="1.2"
+                                stroke-linejoin="round" />
+                            <rect x="4" y="10" width="8" height="5" rx="0.5" stroke="currentColor" stroke-width="1.2" />
+                        </svg>
+                        Print
+                    </button>
+                    <button class="btn btn-primary" onclick="shareReceiptWhatsApp()" id="waReceiptBtn"
+                        style="background:linear-gradient(135deg,#25d366,#128c7e);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                            <path
+                                d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" />
+                        </svg>
+                        WhatsApp
+                    </button>
+                    <button class="btn btn-ghost modal-close" onclick="closeReceiptModal()">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                            <path d="M5 5L13 13M13 5L5 13" stroke="currentColor" stroke-width="1.5"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="receipt-preview" id="receiptPreview"></div>
+        </div>
+    </div>
+
+    <!-- ===== REPORT PREVIEW MODAL ===== -->
+    <div class="modal-overlay" id="reportModal">
+        <div class="modal-content report-modal-content">
+            <div class="modal-header-bar">
+                <h3>Monthly Report</h3>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" onclick="printReport()" id="printReportBtn">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                            <path d="M4 6V1h8v5M4 12H2V7h12v5h-2" stroke="currentColor" stroke-width="1.2"
+                                stroke-linejoin="round" />
+                            <rect x="4" y="10" width="8" height="5" rx="0.5" stroke="currentColor" stroke-width="1.2" />
+                        </svg>
+                        Print
+                    </button>
+                    <button class="btn btn-ghost modal-close" onclick="closeReportModal()">
+                        <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                            <path d="M5 5L13 13M13 5L5 13" stroke="currentColor" stroke-width="1.5"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="report-preview" id="reportPreview"></div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <!-- Utility Functions -->
+    <script src="js/utils.js"></script>
+    <!-- Firebase Database Layer (must load before app modules) -->
+    <script src="js/firebase-db.js"></script>
+
+    <!-- JS Modules (load order matters: tenants before app) -->
+    <script src="js/tenants.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/receipts.js"></script>
+    <script src="js/trips.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/clients.js"></script>
+    <script src="js/users.js"></script>
+
+    <script src="js/petrol.js"></script>
+    <script src="js/settings.js"></script>
+    <script src="js/monthly-billing.js"></script>
+    <script src="js/grocery.js"></script>
+    <script src="js/email.js"></script>
+    <script src="js/audit-log.js"></script>
+    <script src="js/data-import.js"></script>
+    <!-- Portal Authentication Logic -->
+    <script src="js/auth.js"></script>
+
 </body>
 
 </html>
