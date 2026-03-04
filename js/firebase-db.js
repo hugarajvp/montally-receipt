@@ -182,19 +182,21 @@ function _showFirebaseDiagnostic(isOnline, error) {
         color:${isOnline ? '#86efac' : '#fca5a5'};
         padding:0.5rem 1rem; border-radius:8px; font-size:0.75rem;
         z-index:99999; text-align:center; max-width:90vw;
-        backdrop-filter:blur(10px); font-family:monospace;
+        backdrop-filter:blur(10px); font-family:monospace; cursor:pointer;
     `;
+    // Always tap-to-dismiss
+    banner.onclick = () => banner.remove();
+    banner.title = 'Tap to dismiss';
 
     const uid = window._firebaseAuthUid;
     if (isOnline) {
         banner.textContent = `✅ Firebase connected | uid: ${uid ? uid.substring(0, 8) + '...' : 'none'}`;
-        setTimeout(() => banner.remove(), 6000);
+        setTimeout(() => banner.remove(), 5000);
     } else {
-        banner.innerHTML = `❌ Firebase offline<br><small>${error || 'unknown error'}</small><br><small>uid: ${uid ? uid.substring(0, 8) + '...' : 'no auth'}</small>`;
-        // Keep visible so user can see the error — tap to dismiss
-        banner.onclick = () => banner.remove();
-        banner.title = 'Tap to dismiss';
-        setTimeout(() => banner.remove(), 30000);
+        // Show a friendlier message — login still works via local cache
+        banner.innerHTML = `⚠️ Cloud sync unavailable — offline mode<br><small>Login still works. Tap to dismiss.</small>`;
+        // Auto-dismiss after 8s so it doesn't block the login flow
+        setTimeout(() => { if (banner.parentNode) banner.remove(); }, 8000);
     }
 
     // Wait for DOM to be ready
@@ -277,28 +279,8 @@ async function fsGetRegistry() {
         return null;
     } catch (err) {
         console.error('[FS] getRegistry error:', err.message);
-
-        // If offline, try network reset + retry with server source
-        if (err.message && err.message.toLowerCase().includes('offline')) {
-            console.warn('[FS] Client appears offline. Attempting network reset + retry...');
-            const resetOk = await resetFirestoreNetwork();
-            if (resetOk) {
-                try {
-                    const retrySnap = await Promise.race([
-                        getRegistryDocRef().get({ source: 'server' }),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Registry retry timeout')), 10000))
-                    ]);
-                    if (retrySnap.exists) {
-                        window.registrySynced = true;
-                        window.registrySyncedCloud = true;
-                        console.log('[FS] Registry fetched after network reset ✅');
-                        return retrySnap.data();
-                    }
-                } catch (retryErr) {
-                    console.warn('[FS] Registry retry after reset also failed:', retryErr.message);
-                }
-            }
-        }
+        // If offline, skip expensive network reset — just fall back to cache immediately
+        // The network reset (disable+enable+wait 3s) adds unnecessary delay during login
         window.registrySyncedCloud = false;
         return null;
     }
@@ -336,26 +318,7 @@ async function fsGetAppData(tenantCode) {
         return null;
     } catch (err) {
         console.error(`[FS] getAppData error for ${tenantCode}:`, err.message);
-
-        // If offline, try network reset + retry with server source
-        if (err.message && err.message.toLowerCase().includes('offline')) {
-            console.warn('[FS] Client appears offline. Attempting network reset + retry...');
-            const resetOk = await resetFirestoreNetwork();
-            if (resetOk) {
-                try {
-                    const retrySnap = await Promise.race([
-                        getTenantDocRef(tenantCode).get({ source: 'server' }),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('AppData retry timeout')), 10000))
-                    ]);
-                    if (retrySnap.exists) {
-                        console.log(`[FS] AppData for ${tenantCode} fetched after network reset ✅`);
-                        return retrySnap.data();
-                    }
-                } catch (retryErr) {
-                    console.warn(`[FS] AppData retry for ${tenantCode} also failed:`, retryErr.message);
-                }
-            }
-        }
+        // If offline, skip expensive network reset — fall back to localStorage cache immediately
         return null;
     }
 }

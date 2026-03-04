@@ -35,6 +35,27 @@ async function waitForRegistrySync(timeoutMs = 8000, requiredTenantCode = null) 
     // Reset cloud sync flag for this wait session
     window.registrySyncedCloud = false;
 
+    // FAST PATH: If Firebase is already known to be offline, skip all waiting
+    // and resolve immediately from local cache / KNOWN_TENANTS fallback.
+    if (window._firebaseOnline === false) {
+        console.log('[TransitPay] Firebase is offline — resolving from local cache immediately.');
+        const cachedRaw = localStorage.getItem('transitpay_registry');
+        if (cachedRaw && requiredTenantCode) {
+            try {
+                const reg = JSON.parse(cachedRaw);
+                const found = reg.tenants && reg.tenants.some(
+                    t => (t.code || '').toUpperCase() === requiredTenantCode.toUpperCase()
+                );
+                if (found) {
+                    console.log(`[TransitPay] Tenant ${requiredTenantCode} found in local cache ✅`);
+                    return true;
+                }
+            } catch (e) { /* ignore parse err */ }
+        }
+        // Even if not found in cache, return true so login falls through to KNOWN_TENANTS
+        return !!cachedRaw;
+    }
+
     // 1. Wait for Firebase init to FULLY complete (including auth)
     if (window._firebaseInitPromise) {
         console.log('[TransitPay] Awaiting Firebase init promise...');
@@ -46,6 +67,12 @@ async function waitForRegistrySync(timeoutMs = 8000, requiredTenantCode = null) 
         } catch (e) {
             console.warn('[TransitPay] Firebase init wait failed:', e.message);
         }
+    }
+
+    // If after waiting for init Firebase is still not online, bail out fast
+    if (window._firebaseOnline === false) {
+        console.log('[TransitPay] Firebase confirmed offline after init — using local cache.');
+        return !!localStorage.getItem('transitpay_registry');
     }
 
     // Fallback: if init promise doesn't exist, poll for ready

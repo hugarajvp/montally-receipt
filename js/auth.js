@@ -238,7 +238,7 @@ async function handlePortalLogin(e) {
         let tenant = registry.tenants ? registry.tenants.find(t => (t.code || '').toUpperCase() === searchCode) : null;
 
         // DISCOVERY MODE: If registry sync failed or tenant is missing, try a direct document fetch
-        if (!tenant && window.firebaseReady) {
+        if (!tenant && window.firebaseReady && window._firebaseOnline !== false) {
             console.log(`[Portal] Tenant "${searchCode}" not in registry. Trying Direct Discovery...`);
 
             // Wait a moment for auth to stabilize
