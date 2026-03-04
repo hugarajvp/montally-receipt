@@ -155,22 +155,36 @@ function generateReceipt(e) {
         receipt.year = parseInt(year);
     }
 
-    // Save receipt
-    appData.receipts.push(receipt);
-    appData.nextReceiptNumber++;
-    if (typeof addAuditLog === 'function') addAuditLog('created', 'receipt', `Receipt ${receipt.id} for ${clientName} — RM ${receipt.total.toFixed(2)}`, { id: receipt.id, amount: receipt.total });
+    // Check if editing an existing receipt
+    const editingIdEl = document.getElementById('editingReceiptId');
+    const editingId = editingIdEl ? editingIdEl.value : '';
+
+    if (editingId) {
+        // UPDATE existing receipt
+        const idx = appData.receipts.findIndex(r => r.id === editingId);
+        if (idx !== -1) {
+            receipt.id = editingId; // keep original ID
+            receipt.createdAt = appData.receipts[idx].createdAt; // keep original created date
+            appData.receipts[idx] = receipt;
+            if (typeof addAuditLog === 'function') addAuditLog('updated', 'receipt', `Updated receipt ${receipt.id} for ${clientName} — RM ${receipt.total.toFixed(2)}`, { id: receipt.id, amount: receipt.total });
+        }
+        editingIdEl.value = ''; // clear editing state
+        // Reset button label
+        const submitBtn = document.querySelector('#receiptForm button[type="submit"]');
+        if (submitBtn) submitBtn.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg> Generate Receipt`;
+        showToast('Receipt updated successfully!', 'success');
+    } else {
+        // CREATE new receipt
+        appData.receipts.push(receipt);
+        appData.nextReceiptNumber++;
+        if (typeof addAuditLog === 'function') addAuditLog('created', 'receipt', `Receipt ${receipt.id} for ${clientName} — RM ${receipt.total.toFixed(2)}`, { id: receipt.id, amount: receipt.total });
+        showToast('Receipt generated successfully!', 'success');
+    }
+
     saveAppData(appData);
-
-    // Refresh dashboard so grand total & charts update immediately
     updateDashboard();
-
-    // Show receipt preview
     showReceiptPreview(receipt);
-
-    // Reset form
     resetReceiptForm();
-    showToast('Receipt generated successfully!', 'success');
-
     return false;
 }
 
@@ -408,27 +422,104 @@ function loadReceipts() {
             'Paid': '<span class="badge badge-paid">✅ PAID</span>',
             'Unpaid': '<span class="badge" style="background:rgba(239,68,68,0.1);color:#fca5a5;">❌ UNPAID</span>',
             'Pending': '<span class="badge" style="background:rgba(245,158,11,0.12);color:#fcd34d;">⏳ PENDING</span>',
-            // Legacy
             'Unable': '<span class="badge" style="background:rgba(239,68,68,0.1);color:#fca5a5;">❌ UNPAID</span>'
         };
+        const rJson = JSON.stringify(r).replace(/'/g, "&#39;").replace(/`/g, '&#96;');
         return `
-        <div class="receipt-card monthly" onclick='showReceiptPreview(${JSON.stringify(r).replace(/'/g, "&#39;")})'>
-            <div class="receipt-card-header">
+        <div class="receipt-card monthly">
+            <div class="receipt-card-header" style="cursor:pointer;" onclick='showReceiptPreview(${rJson})'>
                 <span class="receipt-card-number">${r.id}</span>
                 <span class="badge badge-monthly">Monthly</span>
             </div>
-            <div class="receipt-card-client">${r.clientName}</div>
-            <div class="receipt-card-details">
+            <div class="receipt-card-client" style="cursor:pointer;" onclick='showReceiptPreview(${rJson})'>${r.clientName}</div>
+            <div class="receipt-card-details" style="cursor:pointer;" onclick='showReceiptPreview(${rJson})'>
                 <span>${formatDate(r.date)}</span>
                 <span>${r.items.length} item${r.items.length > 1 ? 's' : ''}</span>
             </div>
-            <div class="receipt-card-amount">RM ${r.total.toFixed(2)}</div>
+            <div class="receipt-card-amount" style="cursor:pointer;" onclick='showReceiptPreview(${rJson})'>RM ${r.total.toFixed(2)}</div>
             <div class="receipt-card-footer">
                 ${statusBadge[status] || statusBadge['Paid']}
-                <span style="font-size:0.8rem;color:var(--text-muted);">${formatDate(r.date)}</span>
+                <div style="display:flex;gap:0.4rem;">
+                    <button onclick="editReceipt('${r.id}')" class="btn-action btn-action-edit" title="Edit Receipt">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <path d="M11.5 2.5l2 2L5 13H3v-2L11.5 2.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                    <button onclick="deleteReceipt('${r.id}')" class="btn-action btn-action-danger" title="Delete Receipt">
+                        <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+                            <path d="M3 4h10M5 4V2h6v2M6 7v5M10 7v5M4 4l.5 9h7L12 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     `}).join('');
+}
+
+function deleteReceipt(receiptId) {
+    const receipt = appData.receipts.find(r => r.id === receiptId);
+    if (!receipt) return;
+    if (!confirm(`Delete receipt ${receipt.id} for ${receipt.clientName} (RM ${receipt.total.toFixed(2)})? This cannot be undone.`)) return;
+    if (typeof addAuditLog === 'function') addAuditLog('deleted', 'receipt', `Deleted receipt ${receipt.id} for ${receipt.clientName} — RM ${receipt.total.toFixed(2)}`, { id: receiptId });
+    appData.receipts = appData.receipts.filter(r => r.id !== receiptId);
+    saveAppData(appData);
+    updateDashboard();
+    loadReceipts();
+    showToast('Receipt deleted', 'info');
+}
+
+function editReceipt(receiptId) {
+    const receipt = appData.receipts.find(r => r.id === receiptId);
+    if (!receipt) return;
+
+    // Navigate to the form
+    navigateTo('newReceipt');
+
+    // Pre-fill all fields after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        // Client info
+        const clientNameEl = document.getElementById('clientName');
+        const clientPhoneEl = document.getElementById('clientPhone');
+        const receiptDateEl = document.getElementById('receiptDate');
+        if (clientNameEl) clientNameEl.value = receipt.clientName || '';
+        if (clientPhoneEl) clientPhoneEl.value = receipt.clientPhone || '';
+        if (receiptDateEl) receiptDateEl.value = receipt.date || '';
+
+        // Payment status radio
+        const status = receipt.paymentStatus || 'Paid';
+        const radios = document.querySelectorAll('input[name="paymentStatus"]');
+        radios.forEach(r => { if (r.value === status) r.checked = true; });
+
+        // Monthly fields
+        if (receipt.type === 'monthly' && receipt.items && receipt.items[0]) {
+            const monthEl = document.getElementById('monthlyMonth');
+            const yearEl = document.getElementById('monthlyYear');
+            const amountEl = document.getElementById('monthlyAmount');
+            if (amountEl) amountEl.value = receipt.total || 0;
+            if (yearEl) yearEl.value = receipt.year || new Date().getFullYear();
+            if (monthEl && receipt.month) monthEl.value = receipt.month;
+        }
+
+        // Store editing ID so Save knows to update instead of create
+        let hiddenId = document.getElementById('editingReceiptId');
+        if (!hiddenId) {
+            hiddenId = document.createElement('input');
+            hiddenId.type = 'hidden';
+            hiddenId.id = 'editingReceiptId';
+            document.getElementById('receiptForm').appendChild(hiddenId);
+        }
+        hiddenId.value = receiptId;
+
+        // Update submit button label
+        const submitBtn = document.querySelector('#receiptForm button[type="submit"]');
+        if (submitBtn) submitBtn.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M2 9l4 4L14 3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            Update Receipt`;
+
+        showToast('Editing receipt — make changes and click Update', 'info');
+    }, 150);
 }
 
 function filterReceipts() {

@@ -32,6 +32,13 @@ function generateMonthlyReport() {
     });
     const totalPetrol = monthPetrol.reduce((s, p) => s + p.amount, 0);
 
+    // Grocery expenses for this month
+    const monthGrocery = (appData.groceries || []).filter(g => {
+        const d = new Date(g.date);
+        return d >= startDate && d <= endDate;
+    });
+    const totalGrocery = monthGrocery.reduce((s, g) => s + g.amount, 0);
+
     const reportContent = document.getElementById('reportContent');
     reportContent.style.display = 'block';
 
@@ -70,6 +77,10 @@ function generateMonthlyReport() {
             <div class="report-summary-card">
                 <span class="rs-label">Petrol Expenses</span>
                 <span class="rs-value" style="color:#f59e0b;">RM ${totalPetrol.toFixed(2)}</span>
+            </div>
+            <div class="report-summary-card">
+                <span class="rs-label">Grocery Expenses</span>
+                <span class="rs-value" style="color:#34d399;">RM ${totalGrocery.toFixed(2)}</span>
             </div>
         </div>
 
@@ -159,6 +170,36 @@ function generateMonthlyReport() {
             </div>
         ` : '<p style="color:var(--text-muted);margin-bottom:1.5rem;">No petrol expenses for this period.</p>'}
 
+        ${monthGrocery.length > 0 ? `
+            <h4 class="report-section-title">🛒 Grocery Expenses</h4>
+            <div class="table-wrapper" style="margin-bottom:1.5rem;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Item</th>
+                            <th>Payment</th>
+                            <th>Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${monthGrocery.map(g => `
+                            <tr>
+                                <td>${formatDate(g.date)}</td>
+                                <td><strong>${g.item}</strong>${g.notes ? '<br><span style="color:var(--text-muted);font-size:0.78rem;">' + g.notes + '</span>' : ''}</td>
+                                <td>${g.payment || 'Cash'}</td>
+                                <td style="font-family:var(--font-mono);font-weight:600;color:#34d399;">RM ${g.amount.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                        <tr style="font-weight:700;border-top:2px solid var(--border-color);">
+                            <td colspan="3">Total Grocery</td>
+                            <td style="font-family:var(--font-mono);font-weight:700;color:#34d399;">RM ${totalGrocery.toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        ` : '<p style="color:var(--text-muted);margin-bottom:1.5rem;">No grocery expenses for this period.</p>'}
+
         <div class="report-btn-row">
             <button class="btn btn-primary" onclick="printFullReport('${months[month]}', ${year})">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -195,6 +236,13 @@ function printFullReport(monthName, year) {
         return d >= startDate && d <= endDate;
     });
     const totalPetrol = monthPetrol.reduce((s, p) => s + p.amount, 0);
+
+    // Grocery for this month
+    const monthGrocery = (appData.groceries || []).filter(g => {
+        const d = new Date(g.date);
+        return d >= startDate && d <= endDate;
+    });
+    const totalGrocery = monthGrocery.reduce((s, g) => s + g.amount, 0);
 
     const printWindow = window.open('', '_blank');
     printWindow.document.write(`
@@ -242,6 +290,10 @@ function printFullReport(monthName, year) {
                 <div class="summary-box">
                     <div class="label">Petrol</div>
                     <div class="value petrol-total">RM ${totalPetrol.toFixed(2)}</div>
+                </div>
+                <div class="summary-box">
+                    <div class="label">Grocery</div>
+                    <div class="value" style="color:#16a34a;">RM ${totalGrocery.toFixed(2)}</div>
                 </div>
                 <div class="summary-box">
                     <div class="label">Receipts</div>
@@ -296,6 +348,29 @@ function printFullReport(monthName, year) {
                         <tr style="font-weight:700;">
                             <td colspan="3">Total Petrol</td>
                             <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#f59e0b;">RM ${totalPetrol.toFixed(2)}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            ` : ''}
+            ${monthGrocery.length > 0 ? `
+                <h3>🛒 Grocery Expenses</h3>
+                <table>
+                    <thead>
+                        <tr><th>Date</th><th>Item</th><th>Payment</th><th>Notes</th><th>Amount</th></tr>
+                    </thead>
+                    <tbody>
+                        ${monthGrocery.map(g => `
+                            <tr>
+                                <td>${formatDateSimple(g.date)}</td>
+                                <td><strong>${g.item}</strong></td>
+                                <td>${g.payment || 'Cash'}</td>
+                                <td style="color:#64748b;font-size:0.8rem;">${g.notes || '—'}</td>
+                                <td style="font-family:'JetBrains Mono',monospace;font-weight:600;">RM ${g.amount.toFixed(2)}</td>
+                            </tr>
+                        `).join('')}
+                        <tr style="font-weight:700;">
+                            <td colspan="4">Total Grocery</td>
+                            <td style="font-family:'JetBrains Mono',monospace;font-weight:700;color:#16a34a;">RM ${totalGrocery.toFixed(2)}</td>
                         </tr>
                     </tbody>
                 </table>

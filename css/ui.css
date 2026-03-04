@@ -1330,6 +1330,12 @@
     background: rgba(239, 68, 68, 0.08);
 }
 
+.btn-action.btn-action-edit:hover {
+    border-color: var(--primary-500);
+    color: var(--primary-400);
+    background: rgba(99, 102, 241, 0.12);
+}
+
 /* ============================
    STATUS BADGES
    ============================ */
