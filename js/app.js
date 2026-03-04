@@ -343,10 +343,13 @@ function navigateTo(page) {
 
     // Sync mobile bottom nav
     const NAV_MAP = {
-        dashboard: 'mnavDashboard', receipts: 'mnavReceipts',
-        newReceipt: 'mnavNewReceipt', clients: 'mnavClients'
+        dashboard: 'mnavDashboard',
+        petrol: 'mnavPetrol',
+        newReceipt: 'mnavNewReceipt',
+        grocery: 'mnavGrocery',
+        trips: 'mnavTrips'
     };
-    setMobileNavActive(NAV_MAP[page] || 'mnavMore');
+    setMobileNavActive(NAV_MAP[page] || 'mnavDashboard');
 }
 
 function setMobileNavActive(btnId) {
