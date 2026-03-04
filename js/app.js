@@ -219,34 +219,47 @@ function showApp() {
     // Update menu visibility based on role
     updateMenuVisibility();
 
-    // Log login event
-    if (typeof addAuditLog === 'function') addAuditLog('login', 'auth', `User logged in: ${userName} (${userRole})`);
-    saveAppData(appData);
+    // Log login event (do NOT saveAppData here — cloud data not loaded yet!)
+    if (typeof addAuditLog === 'function') {
+        // Queue the audit log write until AFTER cloud data is loaded
+        window._pendingLoginLog = `User logged in: ${userName} (${userRole})`;
+    }
 
     // CRITICAL: Fetch cloud data FIRST, then render dashboard
     const tenantCode = window._ACTIVE_TENANT_CODE || 'HOST';
 
+    // Show sync indicator while loading
+    showToast('🔄 Loading data from cloud...', 'info');
+
     // Load cloud data, then refresh all UI
     const loadAndRender = async () => {
-        // Try loading cloud data
+        // STEP 1: Load from cloud — this overwrites local with cloud data
+        let cloudLoaded = false;
         if (typeof activateTenantScopeCloud === 'function') {
-            const cloudLoaded = await activateTenantScopeCloud(tenantCode);
+            cloudLoaded = await activateTenantScopeCloud(tenantCode);
             if (cloudLoaded) {
-                console.log('[App] Cloud data loaded, refreshing UI...');
+                console.log('[App] ✅ Cloud data loaded for', tenantCode,
+                    '| receipts:', appData.receipts ? appData.receipts.length : 0,
+                    '| clients:', appData.clients ? appData.clients.length : 0);
+                showToast('✅ Data synced from cloud!', 'success');
+            } else {
+                console.warn('[App] ⚠️ Cloud load failed or returned no data. Using local cache.');
+                showToast('⚠️ Could not reach cloud. Showing local data.', 'warning');
             }
         }
 
-        // Migrate old localStorage data to Firestore
-        if (typeof migrateLocalStorageToFirestore === 'function') {
-            await migrateLocalStorageToFirestore(tenantCode);
+        // STEP 2: NOW it is safe to write the login audit log (cloud data is in appData)
+        if (window._pendingLoginLog && typeof addAuditLog === 'function') {
+            addAuditLog('login', 'auth', window._pendingLoginLog);
+            window._pendingLoginLog = null;
         }
 
-        // Start real-time listener for live updates
+        // STEP 3: Start real-time listener for live updates across PCs
         if (typeof startRealtimeSync === 'function') {
             startRealtimeSync(tenantCode);
         }
 
-        // Refresh ALL dashboard sections with cloud data
+        // STEP 4: Refresh ALL UI sections with the correct cloud data
         updateDashboard();
         loadReceipts();
         loadTrips();
@@ -257,7 +270,7 @@ function showApp() {
         populateLocationDropdowns();
     };
 
-    // Render immediately with local data first (fast)
+    // Render immediately with local/cached data first (so the page feels fast)
     updateDashboard();
     loadReceipts();
     loadTrips();
@@ -267,9 +280,10 @@ function showApp() {
     populateClientDropdown();
     populateLocationDropdowns();
 
-    // Then fetch cloud data and re-render (accurate)
+    // Then fetch cloud data and re-render with real data
     loadAndRender().catch(err => {
         console.warn('[App] Cloud data load failed:', err.message);
+        showToast('⚠️ Sync failed. Check internet connection.', 'warning');
     });
 }
 

@@ -127,6 +127,8 @@ async function activateTenantScopeCloud(tenantCode) {
                 if (!appData.users) appData.users = [];
                 if (!appData.petrolExpenses) appData.petrolExpenses = [];
                 if (!appData.emailHistory) appData.emailHistory = [];
+                if (!appData.auditLog) appData.auditLog = [];
+                if (!appData.groceries) appData.groceries = [];
 
                 // Update localStorage cache with cloud data
                 const key = getTenantStorageKey(tenantCode);

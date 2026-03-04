@@ -448,58 +448,10 @@ window.saveAppDataCloud = async function (data) {
     // Then save to Firestore in background
     if (window.firebaseReady) {
         const tenantCode = getActiveTenantCode();
-
-        // PROTECTION: Don't overwrite cloud data with empty local data
-        // This prevents a fresh session on a new PC from wiping receipts, clients, etc.
-        try {
-            const cloudData = await fsGetAppData(tenantCode);
-            if (cloudData) {
-                const cloudReceipts = (cloudData.receipts || []).length;
-                const cloudClients = (cloudData.clients || []).length;
-                const localReceipts = (data.receipts || []).length;
-                const localClients = (data.clients || []).length;
-                const cloudTotal = cloudReceipts + cloudClients;
-                const localTotal = localReceipts + localClients;
-
-                // If cloud has significant data but local is empty/smaller, MERGE instead of overwrite
-                if (cloudTotal > 0 && localTotal < cloudTotal) {
-                    console.warn('[TransitPay] Cloud has more data (' + cloudTotal + ' items) than local (' + localTotal + '). Merging...');
-
-                    // Merge arrays: keep cloud data, add any new local entries
-                    if (cloudReceipts > localReceipts) {
-                        data.receipts = mergeArrayById(cloudData.receipts || [], data.receipts || []);
-                    }
-                    if (cloudClients > localClients) {
-                        data.clients = mergeArrayById(cloudData.clients || [], data.clients || []);
-                    }
-                    if ((cloudData.users || []).length > (data.users || []).length) {
-                        data.users = mergeArrayById(cloudData.users || [], data.users || []);
-                    }
-                    if ((cloudData.petrolExpenses || []).length > (data.petrolExpenses || []).length) {
-                        data.petrolExpenses = mergeArrayById(cloudData.petrolExpenses || [], data.petrolExpenses || []);
-                    }
-                    if ((cloudData.emailHistory || []).length > (data.emailHistory || []).length) {
-                        data.emailHistory = cloudData.emailHistory;
-                    }
-                    // Preserve other cloud settings
-                    if (!data.locations && cloudData.locations) data.locations = cloudData.locations;
-                    if (!data.carPlates && cloudData.carPlates) data.carPlates = cloudData.carPlates;
-                    if (cloudData.nextReceiptNumber > (data.nextReceiptNumber || 0)) {
-                        data.nextReceiptNumber = cloudData.nextReceiptNumber;
-                    }
-
-                    // Update localStorage with merged data
-                    localStorage.setItem(key, JSON.stringify(data));
-                    console.log('[TransitPay] Data merged successfully ✅');
-                }
-            }
-        } catch (mergeErr) {
-            console.warn('[TransitPay] Cloud data merge check failed:', mergeErr.message);
-        }
-
         await fsSaveAppData(tenantCode, data);
     }
 };
+
 
 /**
  * Helper: merge two arrays by 'id' field. Cloud items are kept, local items are added/updated.
