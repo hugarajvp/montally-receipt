@@ -83,85 +83,60 @@ async function initFirebase() {
         }
         db = firebase.firestore();
 
-        // KEY FIX: Force HTTPS long polling instead of WebSockets.
-        // Firestore uses WebSockets by default, but many mobile networks/ISPs block them.
-        // This causes the "unavailable" error even when internet is working fine.
-        // experimentalForceLongPolling: true → always uses standard HTTPS (works everywhere).
+        // Force HTTPS long polling — bypasses WebSocket blocks on mobile networks
         try {
             db.settings({ experimentalForceLongPolling: true, merge: true });
-            console.log('[TransitPay] Force long-polling enabled ✅ (HTTPS mode)');
+            console.log('[TransitPay] Force long-polling enabled ✅');
         } catch (settingsErr) {
-            // Settings can only be set once per Firestore instance — safe to ignore
-            console.log('[TransitPay] Firestore settings already applied:', settingsErr.message);
+            console.log('[TransitPay] Firestore settings already applied');
         }
 
-        console.log('[TransitPay] Firestore initialized');
+        // Force network on
+        try { await db.enableNetwork(); } catch (e) { /* ignore */ }
 
-
-        // Await anonymous auth — required for Firestore security rules
+        // Await anonymous auth (with shorter timeout so app loads faster)
         if (firebase.auth) {
             try {
                 await Promise.race([
                     firebase.auth().signInAnonymously(),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 20000))
+                    new Promise((_, reject) => setTimeout(() => reject(new Error('Auth timeout')), 10000))
                 ]);
                 const user = firebase.auth().currentUser;
                 console.log('[TransitPay] Auth ✅ uid:', user ? user.uid : 'none');
                 window._firebaseAuthUid = user ? user.uid : null;
             } catch (authErr) {
-                console.warn('[TransitPay] Auth failed:', authErr.code, authErr.message);
+                console.warn('[TransitPay] Auth failed (continuing anyway):', authErr.code, authErr.message);
                 window._firebaseAuthError = authErr.message;
             }
         }
 
-        // Force network on
-        try {
-            await db.enableNetwork();
-        } catch (e) { /* ignore */ }
-
-        // Quick connectivity test — read registry doc
-        let isOnline = false;
-        let connectError = null;
-        try {
-            await Promise.race([
-                db.collection('config').doc('registry').get(),
-                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout after 20s')), 20000))
-            ]);
-            isOnline = true;
-            console.log('[TransitPay] Firestore connected ✅');
-        } catch (testErr) {
-            connectError = testErr.message;
-            console.warn('[TransitPay] Firestore connection failed:', testErr.code || '', testErr.message);
-
-            // Retry once with long polling if WebSocket failed
-            if (!isOnline) {
-                try {
-                    console.log('[TransitPay] Retrying with long polling...');
-                    // Can't change settings after init, so just try another read after a pause
-                    await new Promise(r => setTimeout(r, 3000));
-                    await db.enableNetwork();
-                    await Promise.race([
-                        db.collection('config').doc('registry').get(),
-                        new Promise((_, reject) => setTimeout(() => reject(new Error('Retry timeout')), 15000))
-                    ]);
-                    isOnline = true;
-                    connectError = null;
-                    console.log('[TransitPay] Connected on retry ✅');
-                } catch (retryErr) {
-                    connectError = retryErr.message;
-                    console.warn('[TransitPay] Retry also failed:', retryErr.message);
-                }
-            }
-        }
-
+        // Mark Firebase as READY immediately — don't block on a connectivity test
+        // Individual reads will fail on their own if truly offline
         window.firebaseReady = true;
-        window._firebaseOnline = isOnline;
-        window._firebaseConnectError = connectError;
+        window._firebaseOnline = true; // Assume online; forceSyncFromCloud will verify
+        window._firebaseConnectError = null;
+        console.log('[TransitPay] Firebase ready ✅');
 
-        // Show on-screen diagnostic on phone (helps debug)
-        _showFirebaseDiagnostic(isOnline, connectError);
+        // Show brief connected banner
+        _showFirebaseDiagnostic(true, null);
 
-        console.log('[TransitPay] Firebase ready ✅ (online:', isOnline, ')');
+        // Background connectivity test — doesn't block the app
+        setTimeout(async () => {
+            try {
+                await Promise.race([
+                    db.collection('config').doc('registry').get(),
+                    new Promise((_, rej) => setTimeout(() => rej(new Error('bg-timeout')), 8000))
+                ]);
+                console.log('[TransitPay] Background connectivity test: online ✅');
+                window._firebaseOnline = true;
+            } catch (bgErr) {
+                console.warn('[TransitPay] Background connectivity test failed:', bgErr.message);
+                window._firebaseOnline = false;
+                window._firebaseConnectError = bgErr.message;
+                // Show a non-blocking warning banner
+                _showFirebaseDiagnostic(false, bgErr.message);
+            }
+        }, 2000); // Wait 2s after app loads before testing
 
     } catch (err) {
         console.warn('[TransitPay] Firebase init failed:', err.message);
@@ -171,6 +146,7 @@ async function initFirebase() {
         _showFirebaseDiagnostic(false, err.message);
     }
 }
+
 
 /**
  * Shows a temporary on-screen banner with Firebase status.
