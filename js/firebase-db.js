@@ -233,10 +233,10 @@ if (typeof firebase !== 'undefined') {
  * FORCE SYNC FROM CLOUD
  * Clears the local localStorage cache for the active tenant + registry,
  * then re-fetches everything fresh from Firestore.
- * Use this when Computer B shows different/stale data from Computer A.
+ * Use this when a device shows different/stale data vs another device.
  */
 async function forceSyncFromCloud() {
-    if (typeof showToast === 'function') showToast('🔄 Force syncing from cloud...', 'info');
+    if (typeof showToast === 'function') showToast('🔄 Syncing from cloud...', 'info');
     console.log('[TransitPay] === FORCE SYNC START ===');
 
     // Show progress banner
@@ -249,23 +249,88 @@ async function forceSyncFromCloud() {
             background:rgba(99,102,241,0.25); border:1px solid #6366f1;
             color:#a5b4fc; padding:0.75rem 1.5rem; border-radius:10px;
             font-size:0.8rem; z-index:99999; text-align:center;
-            max-width:90vw; backdrop-filter:blur(10px); font-family:monospace;
+            max-width:92vw; backdrop-filter:blur(10px); font-family:monospace;
+            line-height:1.5;
         `;
         document.body.appendChild(diagBanner);
     }
-    diagBanner.textContent = '🔄 Connecting to cloud...';
+    diagBanner.textContent = '🔄 Connecting to Firebase...';
 
-    // Ensure Firebase is ready
-    const ready = await ensureFirebase();
-    if (!ready || !window._firebaseOnline) {
+    // ALWAYS try a fresh reconnect — don't trust the cached _firebaseOnline value
+    // (it may have been set false during initial load but network is fine now)
+    try {
+        if (db) {
+            await db.enableNetwork();
+            console.log('[TransitPay] Force sync: Network re-enabled');
+        }
+    } catch (netErr) {
+        console.warn('[TransitPay] Force sync: enableNetwork failed:', netErr.message);
+    }
+
+    // Wait for Firebase init if not ready
+    if (!window.firebaseReady && window._firebaseInitPromise) {
+        diagBanner.textContent = '🔄 Waiting for Firebase init...';
+        try {
+            await Promise.race([
+                window._firebaseInitPromise,
+                new Promise(r => setTimeout(r, 12000))
+            ]);
+        } catch (e) { /* ignore */ }
+    }
+
+    // If still not ready, try re-initialising
+    if (!window.firebaseReady) {
+        diagBanner.textContent = '🔄 Re-initialising Firebase...';
+        try {
+            window._firebaseInitPromise = initFirebase();
+            await Promise.race([
+                window._firebaseInitPromise,
+                new Promise(r => setTimeout(r, 15000))
+            ]);
+        } catch (e) {
+            console.warn('[TransitPay] Force sync: Re-init failed:', e.message);
+        }
+    }
+
+    // Do a direct Firestore test read regardless of cached _firebaseOnline flag
+    diagBanner.textContent = '🔄 Testing Firestore connection...';
+    let firestoreWorking = false;
+    let firestoreError = '';
+    if (window.firebaseReady && db) {
+        try {
+            await Promise.race([
+                db.collection('config').doc('registry').get(),
+                new Promise((_, rej) => setTimeout(() => rej(new Error('Timeout 15s')), 15000))
+            ]);
+            firestoreWorking = true;
+            window._firebaseOnline = true;
+            console.log('[TransitPay] Force sync: Firestore test read ✅');
+        } catch (testErr) {
+            firestoreError = testErr.code || testErr.message || 'unknown';
+            console.warn('[TransitPay] Force sync: Firestore test read failed:', firestoreError);
+        }
+    }
+
+    if (!firestoreWorking) {
+        // Show specific helpful message based on error type
         diagBanner.style.background = 'rgba(239,68,68,0.2)';
         diagBanner.style.borderColor = '#ef4444';
         diagBanner.style.color = '#fca5a5';
-        diagBanner.textContent = '❌ Cannot reach cloud. Check your internet connection.';
-        setTimeout(() => { if (diagBanner.parentNode) diagBanner.remove(); }, 6000);
-        console.warn('[TransitPay] Force sync: Firebase not online.');
+
+        const isPermission = firestoreError.includes('permission') || firestoreError.includes('PERMISSION_DENIED');
+        const isOffline = firestoreError.includes('offline') || firestoreError.includes('unavailable') || firestoreError.includes('Timeout');
+
+        if (isPermission) {
+            diagBanner.innerHTML = `❌ Firebase Rules blocking access<br><small>Go to Firebase Console → Firestore → Rules → set allow read, write: if true;</small>`;
+        } else if (!window.firebaseReady) {
+            diagBanner.innerHTML = `❌ Firebase not initialised<br><small>Check your internet and reload the page</small>`;
+        } else {
+            diagBanner.innerHTML = `❌ Cannot reach Firestore (${firestoreError})<br><small>Check Firebase Console → Auth → Anonymous sign-in enabled?</small>`;
+        }
+        setTimeout(() => { if (diagBanner.parentNode) diagBanner.remove(); }, 12000);
         return false;
     }
+
 
     diagBanner.textContent = '🔄 Fetching registry from cloud...';
 
