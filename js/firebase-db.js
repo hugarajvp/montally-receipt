@@ -229,6 +229,120 @@ if (typeof firebase !== 'undefined') {
     console.warn('[TransitPay] Firebase SDK not loaded yet. Will retry on first data call.');
 }
 
+/**
+ * FORCE SYNC FROM CLOUD
+ * Clears the local localStorage cache for the active tenant + registry,
+ * then re-fetches everything fresh from Firestore.
+ * Use this when Computer B shows different/stale data from Computer A.
+ */
+async function forceSyncFromCloud() {
+    if (typeof showToast === 'function') showToast('🔄 Force syncing from cloud...', 'info');
+    console.log('[TransitPay] === FORCE SYNC START ===');
+
+    // Show progress banner
+    let diagBanner = document.getElementById('_forceSyncBanner');
+    if (!diagBanner) {
+        diagBanner = document.createElement('div');
+        diagBanner.id = '_forceSyncBanner';
+        diagBanner.style.cssText = `
+            position:fixed; top:70px; left:50%; transform:translateX(-50%);
+            background:rgba(99,102,241,0.25); border:1px solid #6366f1;
+            color:#a5b4fc; padding:0.75rem 1.5rem; border-radius:10px;
+            font-size:0.8rem; z-index:99999; text-align:center;
+            max-width:90vw; backdrop-filter:blur(10px); font-family:monospace;
+        `;
+        document.body.appendChild(diagBanner);
+    }
+    diagBanner.textContent = '🔄 Connecting to cloud...';
+
+    // Ensure Firebase is ready
+    const ready = await ensureFirebase();
+    if (!ready || !window._firebaseOnline) {
+        diagBanner.style.background = 'rgba(239,68,68,0.2)';
+        diagBanner.style.borderColor = '#ef4444';
+        diagBanner.style.color = '#fca5a5';
+        diagBanner.textContent = '❌ Cannot reach cloud. Check your internet connection.';
+        setTimeout(() => { if (diagBanner.parentNode) diagBanner.remove(); }, 6000);
+        console.warn('[TransitPay] Force sync: Firebase not online.');
+        return false;
+    }
+
+    diagBanner.textContent = '🔄 Fetching registry from cloud...';
+
+    // Step 1: Clear and re-fetch registry
+    try {
+        localStorage.removeItem('transitpay_registry');
+        const freshReg = await fsGetRegistry();
+        if (freshReg) {
+            localStorage.setItem('transitpay_registry', JSON.stringify(freshReg));
+            console.log('[TransitPay] Force sync: Registry loaded ✅', freshReg.tenants ? freshReg.tenants.length + ' tenants' : '');
+        } else {
+            console.warn('[TransitPay] Force sync: Registry not found in cloud.');
+        }
+    } catch (regErr) {
+        console.warn('[TransitPay] Force sync: Registry fetch failed:', regErr.message);
+    }
+
+    // Step 2: Clear and re-fetch tenant app data
+    const tenantCode = getActiveTenantCode();
+    const storageKey = window._ACTIVE_STORAGE_KEY || 'transitpay_data';
+
+    diagBanner.textContent = `🔄 Fetching data for ${tenantCode}...`;
+    console.log('[TransitPay] Force sync: Fetching tenant data for', tenantCode, '(key:', storageKey, ')');
+
+    try {
+        localStorage.removeItem(storageKey);
+        const freshData = await fsGetAppData(tenantCode);
+        if (freshData) {
+            // Preserve current user session
+            const currentUser = (typeof appData !== 'undefined' && appData) ? appData.user : null;
+            window.appData = freshData;
+            if (currentUser) window.appData.user = currentUser;
+            localStorage.setItem(storageKey, JSON.stringify(freshData));
+
+            const rc = (freshData.receipts || []).length;
+            const cl = (freshData.clients || []).length;
+            const pt = (freshData.petrolExpenses || []).length;
+            console.log(`[TransitPay] Force sync: ✅ ${tenantCode} — ${rc} receipts, ${cl} clients, ${pt} petrol`);
+
+            diagBanner.style.background = 'rgba(34,197,94,0.15)';
+            diagBanner.style.borderColor = '#22c55e';
+            diagBanner.style.color = '#86efac';
+            diagBanner.textContent = `✅ Synced! ${rc} receipts · ${cl} clients · ${pt} petrol entries`;
+            setTimeout(() => { if (diagBanner.parentNode) diagBanner.remove(); }, 6000);
+
+            // Refresh all UI
+            if (typeof updateDashboard === 'function') updateDashboard();
+            if (typeof loadReceipts === 'function') loadReceipts();
+            if (typeof loadClients === 'function') loadClients();
+            if (typeof loadPetrolExpenses === 'function') loadPetrolExpenses();
+            if (typeof loadTrips === 'function') loadTrips();
+            if (typeof loadUsers === 'function') loadUsers();
+            if (typeof populateClientDropdown === 'function') populateClientDropdown();
+
+            if (typeof showToast === 'function') showToast(`✅ Synced! ${rc} receipts, ${cl} clients`, 'success');
+            return true;
+        } else {
+            diagBanner.style.background = 'rgba(245,158,11,0.15)';
+            diagBanner.style.borderColor = '#f59e0b';
+            diagBanner.style.color = '#fcd34d';
+            diagBanner.textContent = `⚠️ No data found in cloud for "${tenantCode}". Data may not have been saved yet.`;
+            setTimeout(() => { if (diagBanner.parentNode) diagBanner.remove(); }, 8000);
+            console.warn('[TransitPay] Force sync: No data found in Firestore for', tenantCode);
+            if (typeof showToast === 'function') showToast(`⚠️ No cloud data found for ${tenantCode}`, 'warning');
+            return false;
+        }
+    } catch (err) {
+        diagBanner.style.background = 'rgba(239,68,68,0.2)';
+        diagBanner.style.borderColor = '#ef4444';
+        diagBanner.style.color = '#fca5a5';
+        diagBanner.textContent = `❌ Sync failed: ${err.message}`;
+        setTimeout(() => { if (diagBanner.parentNode) diagBanner.remove(); }, 8000);
+        console.error('[TransitPay] Force sync: Fetch failed:', err);
+        return false;
+    }
+}
+
 // ==================== HELPERS ====================
 // Sanitize tenant code for use as Firestore document ID
 function sanitizeTenantCode(code) {
