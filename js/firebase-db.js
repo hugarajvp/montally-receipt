@@ -78,18 +78,18 @@ async function resetFirestoreNetwork() {
 
 async function initFirebase() {
     try {
-        if (!firebase.apps || firebase.apps.length === 0) {
-            firebase.initializeApp(firebaseConfig);
+        // Delete ALL existing Firebase app instances first.
+        // This guarantees a fresh Firestore instance so db.settings() works.
+        for (const app of [...(firebase.apps || [])]) {
+            try { await app.delete(); } catch (e) { /* ignore */ }
         }
+
+        firebase.initializeApp(firebaseConfig);
         db = firebase.firestore();
 
-        // Force HTTPS long polling — bypasses WebSocket blocks on mobile networks
-        try {
-            db.settings({ experimentalForceLongPolling: true, merge: true });
-            console.log('[TransitPay] Force long-polling enabled ✅');
-        } catch (settingsErr) {
-            console.log('[TransitPay] Firestore settings already applied');
-        }
+        // Settings() now guaranteed to work on brand-new Firestore instance
+        db.settings({ experimentalForceLongPolling: true });
+        console.log('[TransitPay] Force long-polling enabled ✅ (HTTPS mode)');
 
         // Force network on
         try { await db.enableNetwork(); } catch (e) { /* ignore */ }
