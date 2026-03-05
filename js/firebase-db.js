@@ -83,17 +83,16 @@ async function initFirebase() {
         }
         db = firebase.firestore();
 
-        // KEY FIX: Enable auto-detect long polling.
-        // Firestore uses WebSockets by default, but many mobile networks/ISPs block WebSockets.
+        // KEY FIX: Force HTTPS long polling instead of WebSockets.
+        // Firestore uses WebSockets by default, but many mobile networks/ISPs block them.
         // This causes the "unavailable" error even when internet is working fine.
-        // experimentalAutoDetectLongPolling: true → tries WebSocket first (fast on desktop),
-        // automatically falls back to HTTPS long polling when WebSocket is blocked (mobile fix).
+        // experimentalForceLongPolling: true → always uses standard HTTPS (works everywhere).
         try {
-            db.settings({ experimentalAutoDetectLongPolling: true, merge: true });
-            console.log('[TransitPay] Long-polling auto-detect enabled ✅');
+            db.settings({ experimentalForceLongPolling: true, merge: true });
+            console.log('[TransitPay] Force long-polling enabled ✅ (HTTPS mode)');
         } catch (settingsErr) {
             // Settings can only be set once per Firestore instance — safe to ignore
-            console.log('[TransitPay] Firestore settings already applied');
+            console.log('[TransitPay] Firestore settings already applied:', settingsErr.message);
         }
 
         console.log('[TransitPay] Firestore initialized');
