@@ -557,4 +557,35 @@ body {
         left: 1rem !important;
         bottom: unset !important;
     }
+
+    /* ── SYNC FROM CLOUD — MOBILE ────────────────────────────── */
+
+    /* Dashboard header sync button → full width on mobile for easy tap */
+    #forceSyncBtn {
+        width: 100% !important;
+        justify-content: center !important;
+        font-size: 0.85rem !important;
+        padding: 0.75rem 1rem !important;
+        order: -1;
+        /* Shows above the period dropdown */
+    }
+
+    /* Force sync progress banner → anchored below topbar, no overlap */
+    #_forceSyncBanner {
+        top: 62px !important;
+        left: 1rem !important;
+        right: 1rem !important;
+        transform: none !important;
+        font-size: 0.78rem !important;
+        padding: 0.6rem 1rem !important;
+        border-radius: 8px !important;
+        text-align: left !important;
+    }
+
+    /* Mobile topbar sync icon — tap feedback */
+    #mobileSyncBtn:active {
+        background: rgba(99, 102, 241, 0.15) !important;
+        color: var(--primary-400) !important;
+        border-radius: 6px;
+    }
 }

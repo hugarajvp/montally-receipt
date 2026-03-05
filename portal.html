@@ -382,7 +382,18 @@
                 <span></span><span></span><span></span>
             </button>
             <span class="mobile-title">TransitPay</span>
-            <div class="mobile-avatar" id="mobileAvatar">U</div>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <!-- Sync from Cloud button — mobile topbar -->
+                <button id="mobileSyncBtn" onclick="forceSyncFromCloud()" title="Sync from cloud"
+                    style="background:none;border:none;cursor:pointer;color:var(--text-secondary);padding:0.35rem;border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;">
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                        <path d="M17 10A7 7 0 113 10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+                        <path d="M17 6v4h-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
+                <div class="mobile-avatar" id="mobileAvatar">U</div>
+            </div>
         </div>
 
         <!-- Main Content Area -->
