@@ -16,6 +16,9 @@ const KNOWN_TENANTS = [
     { code: 'JUDY', name: 'Judy transport', phone: '+60169071675', status: 'Active', createdAt: '2026-02-25T00:00:00.000Z' }
 ];
 
+// The real host phone (used as fallback ONLY when no host exists at all)
+const KNOWN_HOST_PHONE = '+60165858672';
+
 /**
  * Merges KNOWN_TENANTS into the local registry so login
  * works immediately without waiting for cloud sync.
@@ -28,13 +31,13 @@ function injectKnownTenants() {
 
         let changed = false;
 
-        // Inject known host if missing or still at default placeholder
-        const DEFAULT_PHONE = '+60123456789';
+        // Inject known host ONLY if no host exists at all (never overwrite a real host phone).
+        // This prevents Computer B from clobbering the cloud-synced host data on Computer A.
         const hostPhone = registry.host && registry.host.phone;
-        if (!hostPhone || hostPhone === DEFAULT_PHONE) {
-            registry.host = { name: 'VIONA', phone: '0165858672', createdAt: '2026-02-25T20:38:00.000Z' };
+        if (!hostPhone) {
+            registry.host = { name: 'VIONA', phone: KNOWN_HOST_PHONE, createdAt: '2026-02-25T20:38:00.000Z' };
             changed = true;
-            console.log('[Portal] Injected fallback host data');
+            console.log('[Portal] Injected fallback host data (no host existed)');
         }
 
         // Inject known tenants if missing
